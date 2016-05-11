@@ -1,8 +1,11 @@
+package carsale;
+
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-class Car {
+public class Car {
+    private int id; // id
     private String brand; // The make of the car as a string
     private String model; // The model of the car as a string.
     private Date built_date; // The integral year the car was built.
@@ -14,20 +17,18 @@ class Car {
     
     private int miles; // The integral number of miles driven on the car.
     
-    private Date sold_on; // Дата - транспортное средство было продано
-    private boolean sold = false;
+    protected Date sold_on; // Дата - транспортное средство было продано
+    protected boolean sold = false;
 
-    public Car(String model, String brand, double price) { //конструктор) 
+    public Car(int id, String model, String brand, double price) { //конструктор) 
+        this.id = id;
         this.model = model;
         this.brand = brand;
         this.price = price;
         
     }
     
-    public Car() {
-        this(" "," ", 0);
-        }
-    
+ 
     public double getPrice(){
         return price;
         }
@@ -38,7 +39,7 @@ class Car {
     
     public double salePrice(){
         // Return the sale price for this vehicle as a float amount.
-        
+                
         if (sold != false){
             return 0.0; // Already sold
         }
@@ -46,16 +47,16 @@ class Car {
         return this.getWheel()*5000.0;
         }
       }
-
-     public double salePrice(double amt){
-            if (sold != false){
-                return 0.0; // Already sold
-            }
-            else {
-            return this.getWheel()*amt;
-            }
-          }
-    
+    public double salePrice(double amt){
+        // Return the sale price for this vehicle as a float amount.
+        
+        if (sold != false){
+            return 0.0; // Already sold
+        }
+        else {
+        return this.getWheel()*amt;
+        }
+      }
     public void setSold(Date d) {
         this.sold_on = d;
         this.sold = true;
@@ -64,6 +65,10 @@ class Car {
             System.out.println("название: " + this.model + " " + this.brand+ ", цена: "+ this.price);
         }
 
+    public int getId() {
+        return id;
+    }
+    
     public String getBrand() {
         return brand;
     }
@@ -125,8 +130,8 @@ class Truck extends Car {
     private int loadCapacity; // вместимость
     private int wheels;
 
-    public Truck(String model, String brand, double price,int copasity) {
-        super(model,brand, price); //вызов конструктора суперкласса
+    public Truck(int id, String model, String brand, double price,int copasity) {
+        super(id, model,brand, price); //вызов конструктора суперкласса
         loadCapacity = copasity;
     }
 
@@ -155,12 +160,8 @@ class Truck extends Car {
 class Sedan extends Car {
     private int gearType;
     
-    public Sedan() {
-        
-    }
-
-    public Sedan(String model, String brand, double price,int geartype) {
-        super(model,brand, price); //вызов конструктора суперкласса
+    public Sedan(int id, String model, String brand, double price,int geartype) {
+        super(id, model,brand, price); //вызов конструктора суперкласса
         gearType = geartype;
     }
 
@@ -171,68 +172,38 @@ class Sedan extends Car {
     public void setGearType(int gearType) {
         this.gearType = gearType;
     }
+    
+    public double salePrice(double amt){
+        if (sold != false){
+              return 0.0; // Already sold
+          }
+        else {
+         switch (this.getGearType()) {
+             case 1:
+             return this.getWheel()*amt*1.2;
+             //break;
+             case 2:
+             return this.getWheel()*amt*1.5;
+             //break;
+             default:
+             return this.getWheel()*amt;
+             }
+         
+         }
+       }
     public void show() {
      /* вывод copasity: переопределенный метод show() из Car */
     super.show(); // вывод значений из Car
          System.out.println("Gear Type: " + gearType);
     }
+    public void display()
+    {
+        System.out.println("The id of car:" + this.getId());
+        System.out.println("The brand of car:" + this.getBrand());
+        System.out.println("The model of car:" + this.getModel());
+        System.out.println("The price of car:" + this.getPrice());
+        System.out.println("The gear Type of car:" + gearType);
+    }
 }
 
 
-
-public class MainCar9 {
-
-    /**
-     * @param args
-     */
-    static void show1(Car obj1, Sedan obj2) {
-
-        System.out.println("первый метод show(Car, Sedan)");
-        }
-
-    static void show(Sedan obj1, Car obj2){
-
-        System.out.println("второй метод show(Sedan, Car)");
-        }
-
-    static void show(Object obj1, Object obj2){
-        System.out.println("третий метод show(Object, Object)");
-    }
-
-    public static void main(String[] args) {
-
-        Date date = new Date();
-        Calendar cal1 = new GregorianCalendar(2013, 11, 25);//календарь на 25.11.2013
-
-        System.out.println(date.toString());
-        
-        System.out.println(cal1.getTime());// 26.11.2013
-        
-        Car car1 = new Car("Honda", "Hyundai", 12000);
-        car1.show(); // вызов show() класса Car
-        car1.setWheel(4);
-        System.out.println(car1.getModel()+" has "+ car1.getWheel()+" wheels");
-        
-        car1.setSold(date);
-        
-        System.out.println("Sale Price for "+car1.getModel()+" is "+car1.salePrice()+" $");
-        
-        Truck car2 = new Truck("Honda Ridgeline", "Hyundai", 20000, 10);
-       
-        car2.setWheel(6);
-        
-        car2.show(); // вызов show() класса Truck
-        System.out.println(car2.getModel()+" has "+car2.getWheel()+" wheels");
-        //System.out.println(car2.sold_on);// 
-        System.out.println("Sale Price for "+car2.getModel()+" is "+car2.salePrice()+" $");
-        Sedan car3 = new Sedan("Accord LX", "Hyundai", 25000, 1);
-        
-        car3.setWheel(4);
-        
-        car3.show(); // вызов show() класса Truck
-        System.out.println(car3.getModel()+" has "+car3.getWheel()+" wheels");
-
-
-    }
-
-}

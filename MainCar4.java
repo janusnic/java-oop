@@ -1,112 +1,13 @@
+package carsale;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Scanner;
 
-class Car {
-    private String brand; // The make of the car as a string
-    private String model; // The model of the car as a string.
-    private Date built_date; // The integral year the car was built.
-    private int gear; // передача
-    private int wheels; // колесо - An integer representing the number of wheels the car has.
-    private int numberOfSeat;
-    
-    private double price;
-    
-    private int miles; // The integral number of miles driven on the car.
-    private Date sold_on; // Дата - транспортное средство было продано
-
-    public Car(String model, String brand, double price) { //конструктор) 
-        this.model = model;
-        this.brand = brand;
-        this.price = price;
-        
-    }
-    
-    public double getPrice(){
-        return price;
-        }
-    
-    public void setPrice(double price){
-        this.price = price;
-        }
-    
-     public void show(){
-            System.out.println("название: " + this.model + " " + this.brand+ ", цена: "+ this.price);
-        }
-
-    public String getBrand() {
-        return brand;
-    }
-
-    public void setBrand(String brand) {
-        this.brand = brand;
-    }
-
-    public String getModel() {
-        return model;
-    }
-
-    public void setModel(String model) {
-        this.model = model;
-    }
-
-    public Date getDateWasBuilt() {
-        return built_date;
-    }
-
-    public void setDateWasBuilt(Date built_date) {
-        this.built_date = built_date;
-    }
-
-    public int getNumberOfSeat() {
-        return numberOfSeat;
-    }
-
-    public void setNumberOfSeat(int numberOfSeat) {
-        this.numberOfSeat = numberOfSeat;
-    }
-
-    public int getGear() {
-        return gear;
-    }
-
-    public void setGear(int gear) {
-        this.gear = gear;
-    }
-
-    public int getWheel() {
-        return wheels;
-    }
-
-    public void setWheel(int wheels) {
-        this.wheels = wheels;
-    }
-
-    public int getMiles() {
-        return miles;
-    }
-
-    public void setMiles(int miles) {
-        this.miles = miles;
-    }
-}
-
-class Truck extends Car {
-    private int loadCapacity; // вместимость
-
-    public Truck(String model, String brand, double price,int copasity) {
-        super(model,brand, price); //вызов конструктора суперкласса
-        loadCapacity = copasity;
-    }
-
-    public int getLoadCapacity() {
-        return loadCapacity;
-    }
-
-    public void setLoadCapacity(int loadCapacity) {
-        this.loadCapacity = loadCapacity;
-    }
-}
+import java.util.ArrayList;
 
 
 public class MainCar4 {
@@ -115,12 +16,118 @@ public class MainCar4 {
      * @param args
      */
     public static void main(String[] args) {
-
-        Car car1 = new Car("Honda", "Hyundai", 12000);
-        car1.show(); // вызов show() класса Car
-        Truck car2 = new Truck("Honda Ridgeline", "Hyundai", 20000, 10);
+                
+        Scanner sc = new Scanner(System.in);
         
-        car2.show(); // вызов show() класса Truck
+        /*
+         * To read line or string from console use,
+         * readLine method of BufferedReader class.
+         */
+         
+         
+         BufferedReader br =
+         new BufferedReader(new InputStreamReader(System.in));
+         
+         String strLine = null;
+         /*
+         ArrayList carnamesList = new ArrayList();
+         carnamesList.add("Mersedes");
+         System.out.println(carnamesList.get(0));
+         carnamesList.add("BMW");
+         carnamesList.add("Opel");      
+         System.out.println(carnamesList.get(1));
+
+         System.out.println(carnamesList.size());
+         int index = carnamesList.indexOf("BMW");
+         System.out.println(index);
+
+         String carname = "";
+         for (int i = 0; i < carnamesList.size(); i++) {
+           carname = carname + carnamesList.get(i) + " ";
+         }
+         System.out.println("Все cars: " + carname);
+         
+    
+        System.out.println("Все cars: " + carname);
+        
+        carnamesList.set(1, "Mersedes");
+
+        System.out.println(carnamesList.get(1) + "");
+        */
+
+         ArrayList<Sedan> arrayList = new ArrayList<Sedan>();
+         
+         
+         System.out.println("Reading line of characters from console");
+         System.out.println("Enter exit to quit or new to add new or all to display all or show to display item");
+         
+         try
+         {
+               
+                while( (strLine = br.readLine()) != null)
+                {
+                    if(strLine.equals("exit"))
+                        break;
+
+                   switch(strLine)  {
+                   case "exit":
+                       break;
+                   case "new":
+                       System.out.println("Enter id of car:" );  
+                       int id = sc.nextInt();
+                       System.out.println("Enter model of car:" );  
+                       String model = sc.next();
+                       System.out.println("Enter brand of car:" );  
+                       String brand = sc.next();
+                       System.out.println("Enter price of car:" );  
+                       double price = sc.nextDouble();
+                       System.out.println("Enter geartype of car:" );  
+                       int geartype = sc.nextInt();
+                       //
+                       Sedan car = new Sedan(id, model, brand, price, geartype);
+                       arrayList.add(car);
+                       
+                       car.display();
+                       break;
+                       
+                    case "all":
+                        
+                        System.out.println(arrayList);
+                        
+                        for (int i = 0; i < arrayList.size(); i++)
+                        {
+                            Sedan car1 = arrayList.get(i);
+                            car1.display();
+                        }
+                        break;
+                        
+                   case "show":
+                        
+                       Scanner sc1 = new Scanner(System.in);
+                       
+                       System.out.println("Enter id of car:" );  
+                       int id1 = sc.nextInt();
+                        
+                       if (id1<arrayList.size())
+                        {
+                            Sedan car2 = arrayList.get(id1);
+                            car2.display();
+                        }
+                        break;
+
+                    default:
+                        System.out.println("Enter exit to quit or new to add new or all to display all or show to display item");
+                        break;
+                   }
+                }
+               
+                br.close();                    
+                                       
+         }
+         catch(Exception e)
+         {
+                System.out.println("Error while reading line from console : " + e);
+         }
 
     }
 
