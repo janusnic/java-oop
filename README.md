@@ -1,574 +1,1061 @@
-# java Unit 09
-
-Работа с SQLite
-===============
-
-SQLite – это реляционная база данных, запросы к которой можно осуществлять при помощи языка запросов SQL. База данных не поддерживает все особенности SQL и уступает в функциональности другим развитым СУБД, но вполне подходит для хранения и извлечения информации.
-Все базы данных хранятся в файлах, по одному файлу на базу. Количество баз данных, а так же таблиц в них, ограниченно только свободным местом, имеющимся на сайте. А максимально возможный объём одной базы данных составляет 2 Тб.
-
-Так как все данные хранятся в файлах, проблем с переносом базы данных с одного хостинга на другой не существует – достаточно лишь скопировать соответствующие файлы.
-
-Работа с sqlite3
-----------------
-
-Для установки sqlite3 на Linux выполняем команду:
-
-sudo apt-get install sqlite3 libsqlite3-dev
-
-В результате на вашей машине будет установлен sqlite3. Для установки данного инструмента на других ОС следуйте инструкциям http://www.sqlite.org/download.html. Для запуска sqlite выполняем команду sqlite3 в консоли.
-
-Мета Команды
-------------
-Мета Команды - предназначены для формирования таблиц и других административных операций. Все они оканчиваются точкой.
-
-.show   Показывает текущие настройки заданных параметров
-.databases  Показывает название баз данных и файлов
-.quit   Выход из sqlite3
-.tables Показывает текущие таблицы
-.schema Отражает структуру таблицы
-.header Отобразить или скрыть шапку таблицы
-.mode   Выбор режима отображения данных таблицы
-.dump   Сделать копию базы данных в текстовом формате
-
-Стандартные команды
--------------------
-предназначены для взаимодействия с базой данных. Стандартные команды могут быть классифицированы по трём группам:
-
-Язык описания данных DDL
-------------------------
-Язык описания данных DDL: команды для создания таблицы, изменения и удаления баз данных, таблиц и прочего.
-
-        CREATE
-        ALTER
-        DROP
-Язык управления данными DML
-----------------------------
-Язык управления данными DML: позволяют пользователю манипулировать данными (добавлять/изменять/удалять).
-        INSERT
-        UPDATE
-        DELETE
-Язык запросов DQL
------------------
-Язык запросов DQL: позволяет осуществлять выборку данных.
-        SELECT
-
-SQLite так же поддерживает и множество других команд, список которых можно найти тут - https://www.sqlite.org/lang.html.
-
-Файлы баз данных SQLite являются кроссплатформенными. Они могут располагаться на различного рода устройствах.
-
-Connect to SQLite via JDBC
-==========================
-https://bitbucket.org/xerial/sqlite-jdbc/downloads
-
-sqlite-jdbc-3.8.11.2.jar
-
-JDBC (Java DataBase Connectivity) – стандарт для связи Java-программы с базой данных, подключение происходит с помощью так называемых драйверов. 
-
-нужно подключить драйвер sqlite к проекту: 
-
-создаем в корне проекта папку lib и копируем туда файл драйвера sqlite, в Eclipse в панели Package Explorer кликаем правой кнопкой мыши и выбираем Refresh.
-
-После этого в Package Explorer появится папка lib и драйвер sqlite-jdbc-3.8.11.2.jar
-
-Теперь драйвер нужно подключить к проекту, кликаем правой кнопкой мыши на название проекта в Package Explorer и выбираем Properties.
-
-Выбираем пункт Java Build Path -> вкладка Libraries -> кнопка Add JARs…
-
-Выделяем файл драйвера и кликаем на кнопке OK.
-
-
-Connecting To Database
-======================
-
-создадим базу данных sqlite3:
-
-    sqlite3 vehicle.db
-
-В результате, в текущем каталоге у нас появится файл vehicle.db.
-если не указать название файла, sqlite3 создаст временную базу данных.
-
-class SQLiteJDBC1
------------------
-        import java.sql.*;
-
-        public class SQLiteJDBC1
-        {
-          public static void main( String args[] )
-          {
-            Connection c = null;
-            try {
-              Class.forName("org.sqlite.JDBC");
-              c = DriverManager.getConnection("jdbc:sqlite:vehicle.db");
-            } catch ( Exception e ) {
-              System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-              System.exit(0);
-            }
-            System.out.println("Opened database successfully");
-          }
-        }
-
-
-Создание таблицы
-----------------
-определимся с типами данных для каждой из колонок
-
-        CREATE TABLE cars (
-            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-            model CHAR(50) NOT NULL,
-            brand CHAR(50) NOT NULL,
-            price REAL NOT NULL,
-            built_date DATEYIME NOT NULL
-            gear INTEGER NOT NULL,
-            seat INTEGER NOT NULL,
-            wheels INTEGER NOT NULL,
-            miles INTEGER NOT NULL,
-            capacity INTEGER NOT NULL, 
-            sold BOOLEAN,
-            sold_on DATETIME
-             );
-
-
-NOT NULL обеспечит уверенность, что ячейка не будет содержать пустое значение. PRIMARY KEY и AUTOINCREMENT расширяют возможности поля id.
-
-Чтобы убедиться в том, что таблица была создана, выполняем мета команду .tables. В результате видим нашу таблицу cars.
-
-Для получения структуры таблицы наберите .schema cars
-
-class SQLiteJDBC2
------------------
-        import java.sql.*;
-
-        public class SQLiteJDBC2
-        {
-          public static void main( String args[] )
-              {
-                Connection c = null;
-                Statement stmt = null;
-                try {
-                  Class.forName("org.sqlite.JDBC");
-                  c = DriverManager.getConnection("jdbc:sqlite:vehicle.db");
-                  System.out.println("Opened database successfully");
-
-                  stmt = c.createStatement();
-                  String sql = "CREATE TABLE cars " +
-                               "(id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL," +
-                               " model          CHAR(50)    NOT NULL, " + 
-                               " brand          CHAR(50)    NOT NULL, " +
-                               " price          REAL        NOT NULL, " + 
-                               " built_date     DATEYIME    NOT NULL, " + 
-                               " gear           INTEGER     NOT NULL, " + 
-                               " seat           INTEGER     NOT NULL, " + 
-                               " wheels         INTEGER     NOT NULL, " + 
-                               " miles          INTEGER     NOT NULL, " + 
-                               " capacity       INTEGER     NOT NULL, " + 
-                               " sold           BOOLEAN             , " + 
-                               " sold_on        DATEYIME    NOT NULL)"; 
-                  stmt.executeUpdate(sql);
-                  stmt.close();
-                  c.close();
-                } catch ( Exception e ) {
-                  System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-                  System.exit(0);
-                }
-                System.out.println("Table created successfully");
-              }
-        }
-
-ВСТАВКА СТРОК
-=============
-Для вставки воспользуемся командой INSERT.
-
-        BEGIN TRANSACTION;
-        CREATE TABLE cars (id INTEGER PRIMARY KEY  AUTOINCREMENT  NOT NULL, model          CHAR(50)    NOT NULL,  brand          CHAR(50)    NOT NULL,  price          REAL        NOT NULL,  built_date     DATEYIME    NOT NULL,  gear           INTEGER     NOT NULL,  seat           INTEGER     NOT NULL,  wheels         INTEGER     NOT NULL,  miles          INTEGER     NOT NULL,  capacity       INTEGER     NOT NULL,  sold           BOOLEAN             ,  sold_on        DATEYIME    NOT NULL);
-        INSERT INTO cars VALUES(1,'Accord LX','Hyundai',12000.0,'2007-01-01 10:00:00',1,4,4,10000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(2,'Honda','Hyundai',10000.0,'2010-01-01 10:00:00',1,4,4,12000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(3,'Honda','Hyundai',11000.0,'2012-01-01 10:00:00',1,4,4,1000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(4,'Honda Sed','Hyundai',13000.0,'2013-01-01 10:00:00',1,4,4,10000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(5,'Accord LX','Hyundai',12000.0,'2007-01-01 10:00:00',1,4,4,10000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(6,'Honda','Hyundai',10000.0,'2010-01-01 10:00:00',1,4,4,12000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(7,'Honda','Hyundai',11000.0,'2012-01-01 10:00:00',1,4,4,1000,2,0,'0000-00-00 00:00:00');
-        INSERT INTO cars VALUES(8,'Honda Sed','Hyundai',13000.0,'2013-01-01 10:00:00',1,4,4,10000,2,0,'0000-00-00 00:00:00');
-        CREATE TABLE sqlite_sequence(name,seq);
-        INSERT INTO sqlite_sequence VALUES('cars',8);
-        COMMIT;
-
-Указывать значение для id не нужно т.к. оно сформируется автоматически благодаря настройке AUTOINCREMENT.
-
-Теперь можем внести данные в таблицу.
-------------------------------------
-
-INSERT Operation
------------------
-        import java.sql.*;
-
-        public class SQLiteJDBC3
-        {
-            public static void main( String args[] )
-              {
-                Connection c = null;
-                Statement stmt = null;
-                try {
-                  Class.forName("org.sqlite.JDBC");
-                  c = DriverManager.getConnection("jdbc:sqlite:vehicle.db");
-                  c.setAutoCommit(false);
-                  System.out.println("Opened database successfully");
-
-                  stmt = c.createStatement();
-                  String sql = "INSERT INTO cars ( model,brand,price,built_date,gear,seat,wheels,miles,capacity,sold,sold_on )" +
-                  "VALUES ( 'Accord LX', 'Hyundai',12000,'2007-01-01 10:00:00',1,4,4,10000,2,0,'0000-00-00 00:00:00' );"; 
-                  stmt.executeUpdate(sql);
-
-                  sql = "INSERT INTO cars ( model,brand,price,built_date,gear,seat,wheels,miles,capacity,sold,sold_on )" +
-                  "VALUES ( 'Honda', 'Hyundai',10000,'2010-01-01 10:00:00',1,4,4,12000,2,0,'0000-00-00 00:00:00' );"; 
-                  stmt.executeUpdate(sql);
-
-                  sql = "INSERT INTO cars ( model,brand,price,built_date,gear,seat,wheels,miles,capacity,sold,sold_on )" +
-                  "VALUES ( 'Honda', 'Hyundai',11000,'2012-01-01 10:00:00',1,4,4,1000,2,0,'0000-00-00 00:00:00' );"; 
-                  
-                  stmt.executeUpdate(sql);
-
-                  sql = "INSERT INTO cars ( model,brand,price,built_date,gear,seat,wheels,miles,capacity,sold,sold_on )" +
-                  "VALUES ( 'Honda Sed', 'Hyundai',13000,'2013-01-01 10:00:00',1,4,4,10000,2,0,'0000-00-00 00:00:00' );"; 
-                  stmt.executeUpdate(sql);
-
-                  stmt.close();
-                  c.commit();
-                  c.close();
-                } catch ( Exception e ) {
-                  System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-                  System.exit(0);
-                }
-                System.out.println("Records created successfully");
-              }
-        }
-
-SELECT Operation ВЫБОРКА
-========================
-Для выборки данных воспользуемся командой SELECT.
-
-
-        SELECT id, model,brand,price,built_date,gear
-        FROM cars;
-
-Этот же запрос может выглядеть так:
-        SELECT *
-        FROM cars;
-
-В результате из таблицы будут извлечены все строки. Результат может выглядеть без разграничения по колонкам и без заголовка. 
-
-Чтобы это исправить выполняем:
-
-        .show
-
-Для отображения шапки введите .headers ON.
-
-Для отображения колонок выполните команду .mode column.
-
-Выполняем SELECT запрос ещё раз.
-
-вид отображения можно изменить, воспользовавшись мета командой .mode.
-
-class SQLiteJDBC4
------------------
-        import java.sql.*;
-        public class SQLiteJDBC4 {
-
-        public static void main( String args[]) 
-            {
-               Connection c = null;
-                  Statement stmt = null;
-                  try {
-                    Class.forName("org.sqlite.JDBC");
-                    c = DriverManager.getConnection("jdbc:sqlite:vehicle.db");
-                    c.setAutoCommit(false);
-                    System.out.println("Opened database successfully");
-
-                    stmt = c.createStatement();
-                    ResultSet rs = stmt.executeQuery( "SELECT * FROM cars;" );
-                    while ( rs.next() ) {
-                       int id = rs.getInt("id");
-                       String  model = rs.getString("model");
-                       String built_date  = rs.getString("built_date");
-                       String  brand = rs.getString("brand");
-                       float price = rs.getFloat("price");
-                       System.out.println( "ID = " + id );
-                       System.out.println( "model = " + model );
-                       System.out.println( "built_date = " + built_date );
-                       System.out.println( "brand = " + brand );
-                       System.out.println( "price = " + price );
-                       System.out.println();
-                    }
-                    rs.close();
-                    stmt.close();
-                    c.close();
-                  } catch ( Exception e ) {
-                    System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-                    System.exit(0);
-                  }
-                  System.out.println("Operation done successfully");
-            }
-        }
-
-
-UPDATE Operation ОБНОВЛЕНИЕ
+# java Unit 10
+
+Библиотека Swing
+================
+Современные программы нуждаются в графическом интерфейсе пользователя (GUI). Пользователи отвыкли работать через консоль: они управляют программой и вводят входные данные посредством так называемых элементов управления (в программировании их также называют визуальными компонентами), к которым относятся кнопки, текстовые поля, выпадающие списки и т.д.
+
+Каждый из современных языков программирования предоставляет множество библиотек для работы со стандартным набором элементов управления. 
+В Java есть три библиотеки визуальных компонентов для создания графического интерфейса пользователя. 
+
+Самая ранняя библиотека называется AWT. Считается, что при ее проектировании был допущен ряд недочетов, вследствие которых с ней довольно сложно работать. 
+
+Библиотека Swing разработана на базе AWT и заменяет большинство ее компонентов своими, спроектированными более тщательно и удобно. 
+
+Третья, самая новая библиотека, называется SWT.
+Каждая библиотека предоставляет набор классов для работы с кнопками, списками, окнами, меню и т.д., но эти классы спроектированы по-разному: они имеют различный набор методов с разными параметрами, поэтому «перевести» программу с одной библиотеки на другую (например, с целью увеличения быстродействия) не так-то просто. 
+
+Окно JFrame
+-----------
+Каждая GUI-программа запускается в окне и по ходу работы может открывать несколько дополнительных окон.
+В библиотеке Swing описан класс JFrame, представляющий собой окно с рамкой и строкой заголовка (с кнопками «Свернуть», «Во весь экран» и «Закрыть»). Оно может изменять размеры и перемещаться по экрану.
+об окнах Swing
+--------------
+Конструктор JFrame() без параметров создает пустое окно. Конструктор JFrame(String title) создает пустое окно с заголовком title.
+Чтобы написать простейшую программу, выводящую на экран пустое окно, нам потребуется еще три метода:
+setSize(int width, int height)
+------------------------------
+ — устанавливает размеры окна. Если не задать размеры, окно будет иметь нулевую высоту независимо от того, что в нем находится и пользователю после запуска придется растягивать окно вручную. Размеры окна включают не только «рабочую» область, но и границы и строку заголовка.
+
+setDefaultCloseOperation(int operation)
+---------------------------------------
+ — позволяет указать действие, которое необходимо выполнить, когда пользователь закрывает окно нажатием на крестик. Обычно в программе есть одно или несколько окон при закрытии которых программа прекращает работу. Для того, чтобы запрограммировать это поведение, следует в качестве параметра operation передать константу EXIT_ON_CLOSE, описанную в классе JFrame.
+setVisible(boolean visible)
 ---------------------------
+ — когда окно создается, оно по умолчанию невидимо. Чтобы отобразить окно на экране, вызывается данный метод с параметром true. Если вызвать его с параметром false, окно снова станет невидимым.
 
-        UPDATE cars
-        SET price = 14000
-        WHERE id = 2;
+Теперь мы можем написать программу, которая создает окно, выводит его на экран и завершает работу после того, как пользователь закрывает окно.
 
-В результате запись будет изменена.
+для работы с большинством классов библиотеки Swing понадобится импортировать пакет java.swing.*
 
-        UPDATE cars
-        SET price = 14000
-        WHERE model = 'Honda';
+      import javax.swing.*;
+      public class Main1 {
 
-Значение в колонке model может быть не уникально, так что в результате работы команды может быть затронуто более одной строки. Для изменения какой-то конкретной строки следует её отследить по полю id. Мы его определили как PRIMARY KEY, что обеспечивает уникальность значения.
+        /**
+         * @param args
+         */
+        public static void main(String[] args) {
+          JFrame myWindow = new JFrame("Пробное окно");
+          myWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+          myWindow.setSize(400, 300);
+          myWindow.setVisible(true);
 
-
-        import java.sql.*;
-
-        public class SQLiteJDBC5
-        {
-          public static void main( String args[] )
-          {
-            Connection c = null;
-            Statement stmt = null;
-            try {
-              Class.forName("org.sqlite.JDBC");
-              c = DriverManager.getConnection("jdbc:sqlite:vehicle.db");
-              c.setAutoCommit(false);
-              System.out.println("Opened database successfully");
-
-              stmt = c.createStatement();
-              String sql = "UPDATE cars set price = 25000.00 where id=1;";
-              stmt.executeUpdate(sql);
-              c.commit();
-
-              ResultSet rs = stmt.executeQuery( "SELECT * FROM cars;" );
-              while ( rs.next() ) {
-                               int id = rs.getInt("id");
-                               String  model = rs.getString("model");
-                               String built_date  = rs.getString("built_date");
-                               String  brand = rs.getString("brand");
-                               float price = rs.getFloat("price");
-                               System.out.println( "ID = " + id );
-                               System.out.println( "model = " + model );
-                               System.out.println( "built_date = " + built_date );
-                               System.out.println( "brand = " + brand );
-                               System.out.println( "price = " + price );
-                               System.out.println();
-                            }
-              rs.close();
-              stmt.close();
-              c.close();
-            } catch ( Exception e ) {
-              System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-              System.exit(0);
-            }
-            System.out.println("Operation done successfully");
-          }
         }
 
-DELETE Operation УДАЛЕНИЕ
---------------------------
-Для выполнения команды DELETE нужно так же указать условие.
+      }
+
+Как правило, перед отображением окна, необходимо совершить гораздо больше действий, чем в этой простой программке. Необходимо создать множество элементов управления, настроить их внешний вид, разместить в нужных местах окна. Кроме того, в программе может быть много окон и настраивать их все в методе main() неудобно и неправильно, поскольку нарушает принцип инкапсуляции: держать вместе данные и команды, которые их обрабатывают. Логичнее было бы, чтобы каждое окно занималось своими размерами и содержимым самостоятельно. 
+
+        import javax.swing.*;
+        public class SimpleWindow  extends JFrame {
+          SimpleWindow(){
+            super("Пробное окно");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            setSize(250, 100);
+            }
+
+        }
 
 
-        DELETE FROM cars
-        WHERE post_id = 5;
+        import javax.swing.*;
+        public class Main2 {
 
-Для удаления cars 'Honda' OR 'Homer'; выполним:
+          /**
+           * @param args
+           */
+          public static void main(String[] args) {
+            JFrame myWindow = new SimpleWindow();
+            myWindow.setVisible(true);
+
+          }
+
+        }
+
+окно описывается в отдельном классе, являющемся наследником JFrame и настраивающее свой внешний вид и поведение в конструкторе (первой командой вызывается конструктор суперкласса). Метод main() содержится в другом классе, ответственном за управление ходом программы. Каждый из этих классов очень прост, каждый занимается своим делом, поэтому в них легко разбираться и легко сопровождать (т.е. совершенствовать при необходимости).
+
+метод setVisible() не вызывается в классе SimpleWindow, что вполне логично: за тем, где какая кнопка расположена и какие размеры оно должно иметь, следит само окно, а вот принимать решение о том, какое окно в какой момент выводится на экран — прерогатива управляющего класса программы.
+
+Панель содержимого
+------------------
+Напрямую в окне элементы управления не размещаются. Для этого служит панель содержимого, занимающая все пространство окна. Обратиться к этой панели можно методом getContentPane() класса JFrame. С помощью метода add(Component component) можно добавить на нее любой элемент управления.
+
+элемент JButton
+---------------
+Кнопка описывается классом JButton и создается конструктором с параметром типа String — надписью.
+Добавим кнопку в панель содержимого нашего окна командами:
+
+JButton newButton = new JButton();
+getContentPane().add(newButton);
+
+В результате получим окно с кнопкой. Кнопка занимает всю доступную площадь окна.
+
+      import javax.swing.*;
+      public class SimpleWindow1  extends JFrame {
+        SimpleWindow1(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JButton newButton = new JButton();
+          getContentPane().add(newButton);
+          setSize(250, 100);
+          }
+
+      }
+
+Класс Container
+---------------
+Элементы, которые содержат другие элементы, называются контейнерами. Все они являются потомками класса Container и наследуют от него ряд полезных методов:
+- add(Component component) — добавляет в контейнер элемент component;
+- remove(Component component) — удаляет из контейнера элемент component;
+- removeAll() — удаляет все элементы контейнера;
+- getComponentCount() — возвращает число элементов контейнера.
+
+Кроме перечисленных в классе Container определено около двух десятков методов для управления набором компонентов, содержащихся в контейнере, они похожи на методы класса-коллекции. Кроме хранения элементов контейнер занимается их пространственным расположением и прорисовкой. В частности, он имеет метод getComponentAt(int x, int y), возвращающий компонент, в который попадает точка с заданными координатами (координаты отсчитываются от левого верхнего угла компонента) и ряд других. 
+
+Класс JPanel
+------------
+Панель JPanel — это элемент управления, представляющий собой прямоугольное пространство, на котором можно размещать другие элементы. Элементы добавляются и удаляются методами, унаследованными от класса Container.
+у каждой панели есть менеджер размещения, который определяет стратегию взаимного расположения элементов, добавляемых на панель. 
+
+Менеджер последовательного размещения FlowLayout
+------------------------------------------------
+Самый простой менеджер размещения — FlowLayout. Он размещает добавляемые на панель компоненты строго по очереди, строка за строкой, в зависимости от размеров панели. Как только очередной элемент не помещается в текущей строке, он переносится на следующую. Изменим конструктор класса SimpleWindow следующим образом:
+
+      import javax.swing.*;
+      import java.awt.*;
+      public class SimpleWindow2  extends JFrame {
+        SimpleWindow2(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JPanel panel = new JPanel();
+          panel.setLayout(new FlowLayout());
+          panel.add(new JButton("Кнопка"));
+          panel.add(new JButton("+"));
+          panel.add(new JButton("-"));
+          panel.add(new JButton("Кнопка с длинной надписью"));
+          setContentPane(panel);
+          setSize(250, 100);
+          }
+
+      }
 
 
-        DELETE FROM cars
-        WHERE model = 'Honda' OR model = 'Homer';
+Менеджеры расположения описаны в пакете java.awt. 
 
-class SQLiteJDBC
+Новый менеджер расположения FlowLayout создается конструктором без параметров. Обратите внимание, в программе не используется промежуточная переменная. То есть вместо двух команд:
+
+FlowLayout newLayout = new FlowLayout();
+panel.setLayout(newLayout);
+
+Мы используем одну:
+
+panel.setLayout(new FlowLayout());
+
+Это вполне допустимо в тех случаях, когда в дальнейшем нам не потребуется обращаться к создаваемому объекту. Мы создаем менеджер расположения, тут же привязываем его к панели — и все. 
+
+Точно также мы добавляем на панель новые кнопки. Мы нигде больше не пытаемся обратиться к этим кнопкам в программе, поэтому заводить под них переменные нет смысла.
+
+Метод setContentPane(JPanel panel) позволяет заменить панель содержимого окна.
+
+Менеджер граничного размещения BorderLayout
+-------------------------------------------
+Менеджер размещения BorderLayout разделяет панель на пять областей: центральную, верхнюю, нижнюю, правую и левую. В каждую из этих областей можно добавить ровно по одному компоненту, причем компонент будет занимать всю отведенную для него область. Компоненты, добавленные в верхнюю и нижнюю области, будут растянуты по ширине, добавленные в правую и левую — по высоте, а компонент, добавленный в центр, будет растянут так, чтобы полностью заполнить оставшееся пространство панели.
+
+При добавлении элемента на панель с менеджером размещения BorderLayout, необходимо дополнительно указывать в методе add(), какая из областей имеется в виду. Для этого служат строки с названиями сторон света: "North", "South", "East", "West" и "Center". Но вместо них рекомендуется использовать константы, определенные в классе BorderLayout: NORTH, SOUTH, EAST, WEST и CENTER. 
+
+Если же использовать метод add() как обычно, с одним параметром, элемент будет добавлен в центр.
+
+
+      import javax.swing.*;
+      import java.awt.*;
+      public class SimpleWindow3  extends JFrame {
+        SimpleWindow3(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          getContentPane().add(new JButton("Кнопка"), BorderLayout.NORTH);
+          getContentPane().add(new JButton("+"), BorderLayout.EAST);
+          getContentPane().add(new JButton("-"), BorderLayout.WEST);
+          getContentPane().add(new JButton("Кнопка с длинной надписью"), BorderLayout.SOUTH);
+          getContentPane().add(new JButton("В ЦЕНТР!"));
+          setSize(250, 100);
+          }
+
+      }
+
+Менеджер табличного размещения GridLayout
+-----------------------------------------
+GridLayout разбивает панель на ячейки одинаковой ширины и высоты (таким образом окно становится похожим на таблицу). Каждый элемент, добавляемый на панель с таким расположением, целиком занимает одну ячейку. Ячейки заполняются элементами по очереди, начиная с левой верхней.
+Этот менеджер создается конструктором с параметрами (четыре целых числа). Необходимо указать количество столбцов, строк и расстояние между ячейками по горизонтали и по вертикали. 
+
+      import javax.swing.*;
+      import java.awt.*;
+      public class SimpleWindow4  extends JFrame {
+        SimpleWindow4(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JPanel panel = new JPanel();
+          panel.setLayout(new GridLayout(2,3,5,10));
+          panel.add(new JButton("Кнопка"));
+          panel.add(new JButton("+"));
+          panel.add(new JButton("-"));
+          panel.add(new JButton("Кнопка с длинной надписью"));
+          panel.add(new JButton("еще кнопка"));
+          setContentPane(panel);
+          setSize(250, 100);
+          }
+
+      }
+
+Менеджер блочного размещения BoxLayout и класс Box
+--------------------------------------------------
+Менеджер BoxLayout размещает элементы на панели в строку или в столбец.
+Обычно для работы с этим менеджером используют вспомогательный класс Box, представляющий собой панель, для которой уже настроено блочное размещение. Создается такая панель не конструктором, а одним из двух статических методов, определенных в классе Box: createHorizontalBox() и createVerticalBox().
+
+Элементы, добавленные на панель с блочным размещением, выстраиваются один за другим. Расстояние между элементами по умолчанию нулевое. Однако вместо компонента можно добавить невидимую «распорку», единственная задача которой — раздвигать соседние элементы, обеспечивая между ними заданное расстояние. Горизонтальная распорка создается статическим методом createHorizontalStrut(int width), а вертикальная — методом createVerticalStrut(int height). Оба метода определены в классе Box, а целочисленный параметр в каждом из них определяет размер распорки.
+Кроме того, на такую панель можно добавить еще один специальный элемент — своеобразную «пружину». Если размер панели будет больше, чем необходимо для оптимального размещения всех элементов, те из них, которые способны растягиваться, будут стараться заполнить дополнительное пространство собой. Если же разместить среди элементов одну или несколько «пружин», дополнительное свободное пространство будет распределяться и в эти промежутки между элементами. Горизонтальная и вертикальная пружины создаются соответственно методами createHorizontalGlue() и createVerticalGlue().
+
+расположим четыре кнопки вертикально, поставив между двумя центральными «пружину», а между остальными — распорки в 10 пикселов.
+
+    import javax.swing.*;
+    import java.awt.*;
+    public class SimpleWindow5  extends JFrame {
+      SimpleWindow5(){
+        super("Пробное окно");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        Box box = Box.createVerticalBox();
+        box.add(new JButton("Кнопка"));
+        box.add(Box.createVerticalStrut(10));
+        box.add(new JButton("+"));
+        box.add(Box.createVerticalGlue());
+        box.add(new JButton("-"));
+        box.add(Box.createVerticalStrut(10));
+        box.add(new JButton("Кнопка с длинной надписью"));
+        setContentPane(box);
+        setSize(250, 100);
+        }
+
+    }
+
+Особенности выравнивания элементов
+----------------------------------
+
+при разработке окна программы может понадобиться, чтобы какие-то элементы были выровнены иначе, например, по правому краю или по центру. Для того, чтобы установить выравнивание любого визуального компонента, используются методы setAlignmentX(float alignment) — выравнивание по горизонтали и setAlignmentY(float alignment) — выравнивание по вертикали. В качестве параметра проще всего использовать константы, определенные в классе JComponent. Для выравнивания по горизонтали служат константы LEFT_ALIGNMENT (по левому краю), RIGHT_ALIGNMENT (по правому краю) и CENTER_ALIGNMENT (по центру). Для выравнивания по вертикали — BOTTOM_ALIGNMENT (по нижнему краю), TOP_ALIGNMENT (по верхнему краю) и CENTER_ALIGNMENT (по центру).
+
+изменим пример, выровняв третью кнопку по правому краю. 
+Для этого заменим строку:
+
+      box.add(new JButton("-"));
+
+На три других:
+
+    JButton rightButton = new JButton("-");
+    rightButton.setAlignmentX(JComponent.RIGHT_ALIGNMENT);
+    box.add(rightButton);
+
+При выравнивании по правому краю объект не прижимается к правому краю компонента. Вместо этого он прижимается правым краем к невидимой линии выравнивания. Все остальные компоненты прижимаются к этой линии своим левым краем.
+
+    import javax.swing.*;
+    import java.awt.*;
+    public class SimpleWindow6  extends JFrame {
+      SimpleWindow6(){
+        super("Пробное окно");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        Box box = Box.createVerticalBox();
+        box.add(new JButton("Кнопка"));
+        box.add(Box.createVerticalStrut(10));
+        box.add(new JButton("+"));
+        box.add(Box.createVerticalGlue());
+        // изменим пример, выровняв третью кнопку по правому краю. 
+        //box.add(new JButton("-"));
+        JButton rightButton = new JButton("-");
+        rightButton.setAlignmentX(JComponent.RIGHT_ALIGNMENT);
+        box.add(rightButton);
+
+        box.add(Box.createVerticalStrut(10));
+        box.add(new JButton("Кнопка с длинной надписью"));
+        setContentPane(box);
+        setSize(250, 100);
+        }
+
+    }
+
+
+Ручное размещение элементов
+---------------------------
+Если в качестве менеджера размещения панели установить null, элементы не будут расставляться автоматически. Координаты каждого элемента необходимо в этом случае указать явно, при этом они никак не зависят от размеров панели и от координат других элементов. По умолчанию координаты равны нулю (т.е. элемент расположен в левом верхнем углу панели). Размер элемента также необходимо задавать явно (в противном случае его ширина и высота будут равны нулю и элемент отображаться не будет).
+
+Координаты элемента можно задать одним из следующих методов:
+
+- setLocation(int x, int y),
+- setLocation(Point point)
+
+Эти методы работают аналогично, устанавливая левый верхний угол элемента в точку с заданными координатами. Разница в способе задания точки. Можно представить точку двумя целыми числами, а можно объектом класса Point. Класс Point по сути представляет собой ту же пару чисел, его конструктор имеет вид Point(int x, int y). Получить доступ к отдельной координате можно методами getX() и getY().
+
+Предположим, нам нужно поместить элемент b в точности в то место, которое занимает элемент a. 
+
+b.setLocation(a.getLocation());
+
+Размер элемента задается одним из двух методов:
+
+- setSize(int width, int height),
+- setSize(Dimension size)
+
+Класс Dimension, аналогично классу Point, просто хранит два числа, имеет конструктор с двумя параметрами: Dimension(int width, int height) и позволяет получить доступ к своим составляющим — ширине и высоте — с помощью простых методов getWidth() и getHeigth(). Для того, чтобы получить текущий размер элемента, можно воспользоваться методом getSize(), возвращающего объект класса Dimension. Элемент b можно сделать точно такого же размера, как элемент a, выполнив команду:
+
+b.setSize(a.getSize());
+
+    import javax.swing.*;
+    import java.awt.*;
+    public class SimpleWindow7  extends JFrame {
+      SimpleWindow7(){
+        super("Пробное окно");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        Box box = Box.createVerticalBox();
+        box.add(new JButton("Кнопка"));
+        box.add(Box.createVerticalStrut(10));
+        box.add(new JButton("+"));
+        box.add(Box.createVerticalGlue());
+        // изменим пример, выровняв третью кнопку по правому краю. 
+        //box.add(new JButton("-"));
+        JButton rightButton = new JButton("-");
+        rightButton.setAlignmentX(JComponent.RIGHT_ALIGNMENT);
+        
+        box.add(rightButton);
+
+        box.add(Box.createVerticalStrut(10));
+        box.add(new JButton("Кнопка с длинной надписью"));
+        setLocation(140, 120);
+        setContentPane(box);
+        setSize(250, 300);
+        }
+
+    }
+
+
+
+Создадим панель, с которой не будет связано никакого менеджера размещения и вручную разместим на ней две кнопки:
+
+      import javax.swing.*;
+      import java.awt.*;
+      public class SimpleWindow8  extends JFrame {
+        SimpleWindow8(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JPanel panel = new JPanel();
+          panel.setLayout(null);
+          JButton button = new JButton("Кнопка");
+          button.setSize(80, 30);
+          button.setLocation(20,20);
+          panel.add(button);
+          button = new JButton("Кнопка с длинной надписью");
+          button.setSize(120, 40);
+          button.setLocation(70,50);
+          panel.add(button);
+          setContentPane(panel);
+          setSize(250, 150);
+          }
+
+      }
+
+
+Мы используем одну и ту же переменную button для обращения к обеим кнопкам.
+
+Автоматическое определение размеров компонентов
+-----------------------------------------------
+Если у панели есть любой менеджер размещения, она игнорирует явно заданные размеры и координаты всех своих элементов. В этом легко убедиться, заменив в предыдущем примере команду panel.setLayout(null) на panel.setLayout(new FlowLayout()). Менеджер размещения сам определяет координаты и размеры всех элементов.
+
+Каждый визуальный компонент имеет три типа размеров: минимально допустимый, максимально допустимый и предпочтительный. Узнать, чему равны эти размеры для данного компонента можно с помощью соответствующих методов:
+
+- getMinimumSize(),
+- getPreferredSize(),
+- getMaximumSize().
+
+Методы возвращают результат типа Dimension. Они запрограммированы в соответствующем классе. Например, у кнопки минимальный размер — нулевой, максимальный размер не ограничен, а предпочтительный зависит от надписи на кнопке (вычисляется как размер текста надписи плюс размеры полей).
+Менеджер FlowLayout всегда устанавливает предпочтительные размеры элементов. Менеджер BorderLayout устанавливает предпочтительную ширину правого и левого, а также предпочтительную высоту верхнего и нижнего. Остальные размеры подгоняются под доступное пространство панели. Менеджер GridLayout пытается подогнать размеры всех элементов под размер ячеек. Менеджер BoxLayout ориентируется на предпочтительные размеры.
+Когда элемент старается занять все доступное ему пространство, он «учитывает» пожелания не делаться меньше своих минимальных или больше максимальных.
+Всеми тремя размерами можно управлять с помощью соответствующим методов set:
+
+- setMinimumSize(Dimension size),
+- setPreferredSize(Dimension size),
+- setMaximumSize(Dimension size).
+
+Чаще всего используется простой прием, когда элементу «не рекомендуется» увеличиваться или уменьшаться относительно своих предпочтительных размеров. Это легко сделать командой:
+element.setMinimumSize(element.getPreferredSize());
+
+«Упаковка» окна
+---------------
+когда используется какой-либо менеджер расположения, расставляющий элементы и изменяющий их размеры по собственным правилам, трудно сказать заранее, какие размеры окна будут самыми подходящими.
+
+Безусловно, наиболее подходящим будет вариант, при котором все элементы окна имеют предпочтительные размеры или близкие к ним*.
+
+Если вместо явного указания размеров окна, вызвать метод pack(), они будут подобраны оптимальным образом с учетом предпочтений всех элементов, размещенных в этом окне.
+
+заменим в каждом из вышеприведенных примеров команду
+
+setSize(250, 100);
+
+на команду
+
+pack();
+
+когда панель не имеет метода размещения, эта команда не работает (поскольку панель не имеет алгоритма для вычисления своего предпочтительного размера).
+
+      import javax.swing.*;
+      import java.awt.*;
+      public class SimpleWindow9  extends JFrame {
+        SimpleWindow9(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JPanel panel = new JPanel();
+          panel.setLayout(null);
+          JButton button = new JButton("Кнопка");
+          button.setSize(80, 30);
+          button.setLocation(20,20);
+          panel.add(button);
+          button = new JButton("Кнопка с длинной надписью");
+          button.setSize(120, 40);
+          button.setLocation(70,50);
+          panel.add(button);
+          setContentPane(panel);
+          //setSize(250, 150);
+          pack();
+          }
+
+      }
+
+
+Рамки
+-----
+Когда панели служат не просто для размещения элементов в соответствии с алгоритмом некоторого менеджера, а для визуального отделения их друг от друга, они оформляются с помощью рамок.
+Рамка панели устанавливается методом setBorder(Border border). Параметром метода выступает рамка — объект класса Border. Это абстрактный класс, поэтому для создания рамки используются его наследники:
+- EmptyBorder — пустая рамка, позволяет создать отступы вокруг панели. Размеры отступов задаются в конструкторе четырьмя целыми числами.
+- TitledBorder — рамка с заголовком. Простейший конструктор имеет один параметр типа String (текст заголовка). Заголовок может размещаться вдоль любой стороны рамки, иметь различные начертания.
+- EtchedBorder — рамка с тиснением. Может быть вогнутой или выпуклой.
+- BevelBorder — объемная рамка (выпуклая или вогнутая). Можно настроить цвета, требуемые для получения объемных эффектов.
+- SoftBevelBorder — то же самое, что BevelBorder, но позволяет дополнительно скруглить углы.
+- LineBorder — простая рамка, нарисованная сплошной линией. Можно выбирать цвет и толщину линии, скруглить углы.
+- MatteBorder — рамка из повторяющегося рисунка.
+- CompoundBorder — объединяет две рамки, передаваемые в качестве параметров конструктору в одну новую рамку.
+Все перечисленные классы описаны в пакете javax.swing.border.
+
+создадим шесть панелей с различными рамками и разместим их в виде таблицы. Чтобы не описывать шесть раз процедуру создания новой панели, вынесем ее в отдельный метод:
+
+      private JPanel createPanel(Border border, String text) {
+          JPanel panel = new JPanel();
+          panel.setLayout(new BorderLayout());
+          panel.add(new JButton(text));
+          panel.setBorder(new CompoundBorder(new EmptyBorder(12,12,12,12), border));
+          return panel;
+          }
+
+Метод createPanel() создает панель с кнопкой во весь свой размер. В качестве параметра передается надпись на кнопке и рамка, которую необходимо добавить к панели. Рамка добавляется не напрямую, а путем композиции с пустой рамкой. Этот прием часто используется, чтобы рамка не прилипала к краю панели.
+Теперь шесть раз воспользуемся этим методом в конструкторе окна программы.
+
+      SimpleWindow(){
+          super("Пробное окно");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JPanel panel = new JPanel();
+          panel.setLayout(new GridLayout(2,3,5,10));
+          panel.add(createPanel(new TitledBorder("Рамка с заголовком"), "TitledBorder"));
+          panel.add(createPanel(new EtchedBorder(), "EtchedBorder"));
+          panel.add(createPanel(new BevelBorder(BevelBorder.LOWERED), "BevelBorder"));
+          panel.add(createPanel(new SoftBevelBorder(BevelBorder.RAISED), "SoftBevelBorder"));
+          panel.add(createPanel(new LineBorder(Color.ORANGE, 4), "LineBorder"));
+          panel.add(createPanel(new MatteBorder(new ImageIcon("1.gif")), "MatteBorder"));
+          setContentPane(panel);
+          pack();
+          }
+
+
+Класс Color предназначен для работы с цветом. В нем есть несколько констант, описывающих наиболее распространенные цвета. В частности, к таковым относится Color.ORANGE.
+Класс ImageIcon описывает графическое изображение. Параметр его конструктора — это путь к файлу, из которого изображение может быть загружено. В примере используется относительное имя файла «1.gif». Чтобы объект ImageIcon был успешно создан, файл с таким именем должен быть помещен в папку проекта.
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow10  extends JFrame {
+          
+
+          SimpleWindow10(){
+            super("Пробное окно");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            JPanel panel = new JPanel();
+            panel.setLayout(new GridLayout(2,3,5,10));
+            panel.add(createPanel(new TitledBorder("Рамка с заголовком"), "TitledBorder"));
+            panel.add(createPanel(new EtchedBorder(), "EtchedBorder"));
+            panel.add(createPanel(new BevelBorder(BevelBorder.LOWERED), "BevelBorder"));
+            panel.add(createPanel(new SoftBevelBorder(BevelBorder.RAISED), "SoftBevelBorder"));
+            panel.add(createPanel(new LineBorder(Color.ORANGE, 4), "LineBorder"));
+            panel.add(createPanel(new MatteBorder(new ImageIcon("1.gif")), "MatteBorder"));
+            setContentPane(panel);
+            pack();
+            }
+          
+          private JPanel createPanel(Border border, String text) {
+            JPanel panel = new JPanel();
+            panel.setLayout(new BorderLayout());
+            panel.add(new JButton(text));
+            panel.setBorder(new CompoundBorder(new EmptyBorder(12,12,12,12), border));
+            return panel;
+            }
+
+        }
+
+
+
+Основные визуальные компоненты Swing
+====================================
+Класс JComponent
 ----------------
-        import java.sql.*;
+Все визуальные компоненты библиотеки Swing унаследованы от класса JComponent. Сам этот класс является абстрактными и непосредственно не используется, но все визуальные компоненты наследуют его методы. 
 
-        public class SQLiteJDBC
-        {
-          public static void main( String args[] )
-          {
-            Connection c = null;
-            Statement stmt = null;
-            try {
-              Class.forName("org.sqlite.JDBC");
-              c = DriverManager.getConnection("jdbc:sqlite:vehicle.db");
-              c.setAutoCommit(false);
-              System.out.println("Opened database successfully");
+setEnabled(boolean enabled)
+---------------------------
+используется для управления активностью компонента. При вызове этого метода с параметром false компонент переходит в неактивное состояние. Для каждого наследника JComponent эта «неактивность» может быть переопределена по-разному. Например, неактивная кнопка не нажимается, не реагирует на наводящуюся мышь и отображается монохромным серым цветом. 
 
-              stmt = c.createStatement();
-              String sql = "DELETE from cars where id=2;";
-              stmt.executeUpdate(sql);
-              c.commit();
+Метод isEnabled() 
+-----------------
+возвращает true, если элемент активен и false в противном случае.
 
-              ResultSet rs = stmt.executeQuery( "SELECT * FROM cars;" );
-              while ( rs.next() ) {
-                               int id = rs.getInt("id");
-                               String  model = rs.getString("model");
-                               String built_date  = rs.getString("built_date");
-                               String  brand = rs.getString("brand");
-                               float price = rs.getFloat("price");
-                               System.out.println( "ID = " + id );
-                               System.out.println( "model = " + model );
-                               System.out.println( "built_date = " + built_date );
-                               System.out.println( "brand = " + brand );
-                               System.out.println( "price = " + price );
-                               System.out.println();
-                            }
-              rs.close();
-              stmt.close();
-              c.close();
-            } catch ( Exception e ) {
-              System.err.println( e.getClass().getName() + ": " + e.getMessage() );
-              System.exit(0);
-            }
-            System.out.println("Operation done successfully");
+setVisible(boolean visible) 
+---------------------------
+управляет видимостью компонента. Мы уже использовали его для отображения окна JFrame. Большинство элементов управления, в отличие от окна, по умолчанию являются видимыми. Метод isVisible() возвращает false, если элемент невидим и true в противном случае.
+
+setBackground(Color color)
+--------------------------
+С помощью метода setBackground(Color color) можно изменить цвет заднего фона компонента. Однако эффект будет иметь место лишь в том случае, если компонент непрозрачен (некоторые компоненты, например метка JLabel по умолчанию являются прозрачными). Непрозрачность устанавливается методом setOpaque(boolean opaque) с параметром true. Методы getBackground() и isOpaque() возвращают текущий цвет заднего фона и непрозрачность компонента.
+Метка JLabel
+------------
+В большинстве визуальных библиотек метка — один из самых простейших компонентов. Она представляет собой обычный текст, который выводится в заданном месте окна и используется для вывода вспомогательной текстовой информации: подписи к другим элементам, инструкции и предупреждения для пользователя. В Swing метка позволяет достичь более интересных эффектов. Во-первых, помимо текста можно использовать значок. Во-вторых, с ее помощью можно выводить отформатированный текст.
+Текст и значок метки можно задать в ее конструкторе. У нее есть несколько конструкторов с различными параметрами, в частности:
+
+JLabel(String text) — создает метку с надписью text
+JLabel(Icon image) — создает метку со значком image
+JLabel(String text, Icon image, int align) — создает метку с надписью text и значком image. 
+
+Третий параметр задает выравнивание текста вместе со значком. В качестве него может быть использована одна из констант, описанных в интерфейсе SwingConstants: LEFT, RIGHT, CENTER.
+
+Для примера создадим окно с меткой, созданной при помощи третьего конструктора.
+
+Напишем в конструкторе класса SimpleWindow следующий код:
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow11  extends JFrame {
+          
+          SimpleWindow11(){
+          super("Окно с надписью");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JLabel label = new JLabel("Метка со значком и с надписью", new ImageIcon("1.gif"), SwingConstants.RIGHT);
+          getContentPane().add(label);
+          pack();
+        }
+
+        }
+
+
+В библиотеке Swing метка может быть настроена для отображения отформатированного текста в формате HTML. Для этого необходимо, чтобы строка, устанавливаемая в качестве надписи метки, начиналась с тега html. После этого можно использовать в строке любый теги языка HTML версии 3.2, и они будут преобразовываться в соответствующие атрибуты форматирования. В этом легко убедиться, изменив в предыдущем примере строку с вызовом конструктора на:
+
+      JLabel label = new JLabel("<html>К этой метке применено " +
+      "HTML-форматирование, включая: <ul><li> <i>курсив</i>," +
+      "<li><b>полужирный</b> <li><font size = +2> увеличение размера </font>" +
+      "<li>маркированный список </ul>");
+
+Поскольку текст нашей надписи достаточно длинный, строка для удобства восприятия разбивается на части и используется оператор +.
+
+      import javax.swing.*;
+      import java.awt.*;
+      import javax.swing.border.*;
+
+      public class SimpleWindow12  extends JFrame {
+        
+        SimpleWindow12(){
+        super("Окно с надписью");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        // JLabel label = new JLabel("Метка со значком и с надписью", new ImageIcon("1.gif"), SwingConstants.RIGHT);
+        JLabel label = new JLabel("<html>К этой метке применено " +
+            "HTML-форматирование, включая: <ul><li> <i>курсив</i>," +
+            "<li><b>полужирный</b> <li><font size = +2> увеличение размера </font>" +
+            "<li>маркированный список </ul>");
+
+        getContentPane().add(label);
+        pack();
+      }
+
+      }
+
+
+основные методы класса JLabel:
+------------------------------
+- getText() — возвращает текущий текст надписи метки
+- setText(String text) — задает новый текст надписи
+- getIcon() — возвращает значок метки
+- setIcon(Icon image) — устанавливает новый значок. В качестве значка обычно используется объект уже знакомого нам простого класса ImageIcon.
+- getVerticalAlignment(), setVerticalAlignment(int align), getHorizontalAlignment(), setHorizontalAlignment(int align) — эти четыре метода позволяют получить текущее или установить новое выравнивание (по горизонтали и вертикали) метки относительно ее границ.
+- getVerticalTextPosition(), setVerticalTextPosition(int align), getHorizontalTextPosition(), setHorizontalTextPosition(int align) — эти четыре метода позволяют получить текущее или установить новое выравнивание текста относительно значка.
+- getIconTextGap(), setIconTextGap(int gap) — позволяет получить или задать расстояние между текстом и значком метки в пикселах.
+
+Кнопка JButton
+--------------
+Кнопка — это прямоугольник с текстом (и/или значком), по которому пользователь щелкает, когда хочет выполнить какое-то действие (или о чем-то сигнализировать).
+Кнопка создается одним из пяти конструкторов, в частности JButton(), JButton(String text), JButton(Icon icon), JButton(String text, Icon icon), параметры которых говорят сами за себя.
+Кроме обычного значка можно назначить кнопке еще несколько — для различных состояний. Метод setRolloverIcon(Icon icon) позволяет задать значок, который будет появляться при наведении на кнопку мыши, setPressedIcon(Icon icon) — значок для кнопки в нажатом состоянии, setDisableIcon(Icon icon) — значок для неактивной кнопки. Каждому из этих методов соответствует метод get.
+Метод setMargin(Insets margin) 
+------------------------------
+позволяет задать величину отступов от текста надписи на кнопке до ее полей. Объект класса Insets, который передается в этот метод, может быть создан конструктором с четырьмя целочисленными параметрами, задающими величину отступов: Insets(int top, int left, int bottom, int right). 
+Метод getMargin() 
+-----------------
+возвращает величину текущих отступов в виде объекта того же класса.
+Все методы класса JLabel присутствуют и в классе JButton. С помощью этих методов можно изменять значок и текст надписи на кнопке, а также управлять их взаимным расположением друг относительно друга и относительно края кнопки (с учетом отступов).
+
+Посредством методов setBorderPainted(boolean borderPainted), setFocusPainted(boolean focusPainted), setContentAreaFilled(boolean contentAreaFilled) можно отключать (параметром false) и включать обратно (параметром true) прорисовку рамки, прорисовку фокуса (кнопка, на которой находится фокус, выделяется пунктирным прямоугольником) и закраску кнопки в нажатом состоянии.
+
+создадим кнопку со значком и с надписью, изменим ее отступы и расположение текста относительно значка (текст будет выровнен влево и вверх относительно значка).
+
+      import javax.swing.*;
+      import java.awt.*;
+      import javax.swing.border.*;
+
+      public class SimpleWindow13  extends JFrame {
+        
+        SimpleWindow13(){
+          super("Окно с кнопкой");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JButton button = new JButton("Кнопка", new ImageIcon("1.gif"));
+          button.setMargin(new Insets(0, 10, 20, 30));
+          button.setVerticalTextPosition(SwingConstants.TOP);
+          button.setHorizontalTextPosition(SwingConstants.LEFT);
+          getContentPane().add(button);
+          pack();
+      }
+
+      }
+
+Компоненты JToggleButton, JCheckBox, JRadioButton
+-------------------------------------------------
+Компонент JToggleButton представляет собой кнопку, которая может находиться в двух состояниях: нажатом и отпущенном. Когда пользователь щелкает мышкой по такой кнопке, она изменяет свое состояние. Именно таким образом ведут себя кнопки форматирования на инструментальной панели текстового редактора. Кнопка [I] не только устанавливает или убирает курсивное начертание в выделенном тексте, но и сигнализирует о его наличии или отсутствии.
+
+Основной конструктор — JToggleButton(String text, Icon icon, boolean selected) создает кнопку с заданными надписью, значком и текущим состоянием. Кнопку можно перевести в требуемое состояние программным путем, вызвав метод setSelected(boolean selected). Метод isSelected() возвращает true, если кнопка выбрана (т.е. находится в нажатом состоянии) и false в противном случает.
+
+От класса JToggleButton унаследован класс JCheckBox — флажок. Этот класс имеет точно такой же набор конструкторов и методов, т.е. не расширяет функциональность предка. Единственное различие между ними — во внешнем виде: JCheckBox выглядит не как кнопка, а как небольшой квадратик, в котором можно поставить или убрать галочку.
+
+Аналогичным образом ведет себя класс JRadioButton — переключатель или радиокнопка, внешне выглядящая как пустой кружок, когда она не выделена и кружок с точкой в выделенном состоянии.
+Несмотря на то, что классы JCheckBox и JRadioButton ведут себя абсолютно одинаково (и аналогично их общему предку JToggleButton), их принято использовать в различных ситуациях. В частности, JRadioButton предполагает выбор единственной альтернативы из нескольких возможных: несколько таких объектов объединяются в одну группу (чаще всего эта группа визуально обозначается рамкой) и при выборе одного из элементов группы предыдущий выбранный элемент переходит в состояние «не выбран».
+
+Для того, чтобы получить такое поведение, используется специальный контейнер ButtonGroup — взаимоисключающая группа (создается конструктором без параметров). Если добавить в один такой контейнер несколько элементов JRadioButton, то выбранным всегда будет только один из них.
+В принципе, в ButtonGroup могут быть добавлены не только переключатели, но и флажки, и кнопки выбора (и даже обычные кнопки). Но при разработке интерфейса следует следовать устоявшемуся подходу, согласно которому во взаимоисключающую группу следует объединять объекты JRadioButton (и, в некоторых случаях JToggleButton), но не JCheckBox.
+
+Метод add(AbstractButton button)* добавляет элемент в группу. Метод getElements() возвращает все ее элементы в виде коллекции Enumeration. По коллекции можно пройтись итератором и найти выделенный элемент.
+
+Рассмотри пример, в котором создаются две кнопки выбора, два флажка и два переключателя. Кнопки выбора и переключатели объединены в группы ButtonGroup. Для того, чтобы обвести каждую пару элементов рамкой, необходимо расположить каждую пару элементов на отдельной панели.
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow14  extends JFrame {
+          
+          SimpleWindow14(){
+            super("Пример с кнопками выбора, флажками и переключателями");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            ImageIcon icon = new ImageIcon("1.gif"); // будем использовать один значок на все случаи
+            Box mainBox = Box.createVerticalBox();
+            Box box1 = Box.createVerticalBox();
+            JToggleButton tButton1 = new JToggleButton("Кнопка выбора 1");
+            JToggleButton tButton2 = new JToggleButton("Кнопка выбора 2", icon);
+            ButtonGroup bg = new ButtonGroup(); // создаем группу взаимного исключения
+            bg.add(tButton1);
+            bg.add(tButton2); // сделали кнопки tButton1 и tButton2 взаимоисключающими
+            box1.add(tButton1);
+            box1.add(tButton2); // добавили кнопки tButton1 и tButton2 на панель box1
+            box1.setBorder(new TitledBorder("Кнопки выбора"));
+            Box box2 = Box.createVerticalBox();
+            JCheckBox check1 = new JCheckBox("Флажок 1");
+            JCheckBox check2 = new JCheckBox("Флажок 2", icon);
+            box2.add(check1);
+            box2.add(check2); // добавили флажки на панель box2
+            box2.setBorder(new TitledBorder("Флажки"));
+            Box box3 = Box.createVerticalBox();
+            JRadioButton rButton1 = new JRadioButton("Переключатель 1");
+            JRadioButton rButton2 = new JRadioButton("Переключатель 2", icon);
+            bg = new ButtonGroup(); // создаем группу взаимного исключения
+
+            bg.add(rButton1);
+            bg.add(rButton2); // сделали радиокнопки взаимоисключающими
+            box3.add(rButton1);
+            box3.add(rButton2); // добавили радиокнопки на панель box3
+            box3.setBorder(new TitledBorder("Переключатели"));
+            mainBox.add(box1);
+            mainBox.add(box2);
+            mainBox.add(box3);
+            setContentPane(mainBox);
+            pack();
+        }
+
+        }
+
+
+у флажков или переключателей рисунок заменяет элемент выделения. Но рисунок не показывает, выбран ли данный объект. Необходимо установить отдельный рисунок для выделенного состояния, что достигается методом setSelectedIcon(Icon icon). 
+
+Добавьте в нужные места команды:
+check2.setSelectedIcon(new ImageIcon("2.gif"));
+и
+rButton2.setSelectedIcon(new ImageIcon("2.gif"));
+
+файл 2.gif и файл 1.gif должны находиться в доступном для программы месте: в директории вашего проекта.
+
+
+Текстовое поле JTextField
+-------------------------
+Текстовое поле — простой и часто используемый компонент, предназначенный для ввода небольших по объему (записываемых в одну строку) текстовых данных. Для создания текстового поля чаще всего используются конструкторы:
+JTextField(int columns) — создает пустое текстовое поле, ширина которого достаточна для размещения columns символов. При этом пользователь может вводить в текстовое поле строку какой угодно длины: она просто будет прокручиваться.
+JTextField(String text) — создает текстовое поле с начальным текстом text.
+JTextField(String text, int columns) — устанавливает и ширину и начальный текст.
+Занести текст в поле можно методом setText(String text). Метод getText() возвращает содержимое текстового поля целиком, а getText(int offset, int length) — фрагмент содержимого длины length, начиная с символа offset.
+Часть текста в поле может выделяться (как программным путем, так и в результате действий пользователя). Метод getSelectedText() позволяет получить выделенную часть текста. Заменить выделенный текст другим можно с помощью метода replaceSelection(String content). Методы getSelectionStart() и getSelectionEnd() возвращают границы выделенного участка, а методы setSelectionStart(int start) и setSelectionEnd(int end) изменяют их.
+Метод getCaretPosition() возвращает позицию курсора (каретки) в текстовом поле, а метод setCaretPosition(int position) позволяет задать ее программно. Методом setCaretColor(Color color) можно изменить цвет курсора.
+По умолчанию текст в поле прижимается к левому краю. Изменить это можно методом setHorizontalAlignment(int align), в качестве параметра передается одна из констант выравнивания, определенных в этом же классе JTextField: LEFT, CENTER, RIGHT.
+Поле для ввода пароля JPasswordField
+------------------------------------
+JPasswordField является прямым потомком JTextField, поэтому для него справедливо все сказанное выше. Отличие заключается в том, что весь введенный в него текст скрыт от посторонних глаз: он заменяется звездочками или другим символом, установить который позволяет метод setEchoChar(char echo), а получить — getEchoChar().
+Чаще всего JPasswordField применяется для ввода пароля. Метод getText() позволяет получить этот пароль, но пользоваться им не рекомендуется (злоумышленник может проанализировать содержимое оперативной памяти и перехватить этот пароль). Вместо него следует использовать метод getPassword(), возвращающий массив символов char[]. После того, как введенный пароль будет обработан (например, сравнен с реальным паролем) рекомендуется заполнить этот массив нулями, чтобы следов в оперативной памяти не осталось.
+Область для ввода текста JTextArea
+----------------------------------
+JTextArea также является потомком JTextField и наследует все его методы. В отличие от текстового поля область для ввода текста позволяет ввести не одну строку, а несколько. В связи с этим JTextArea предлагает несколько дополнительных функций. Во-первых, это способность переносить слова на соседнюю строку целиком, которой управляет метод setWrapStyleWord(boolean wrapStyle). Если вызвать этот метод с параметром true, то слова не будут разрываться в том месте, где они «натыкаются» на границу компонента, а будут целиком перенесены на новую строку. Во-вторых, это способность переносить текст (то есть длинные строки будут укладываться в несколько строк вместо одной, уходящей за границы компонента. Этой способностью управляет метод setLineWrap(boolean lineWrap). Методы isWrapStyleWord() и isLineWrap() возвращают текущее состояние данных способностей (true — активирована и false — деактивирована).
+При создании JTextArea чаще всего используют конструктор JTextArea(int rows, int columns), устанавливающий высоту (количество строк) и ширину (количество символов) компонента.
+Для работы со своим содержимым JTextArea дополнительно предлагает два удобных метода. Метод append(String text) добавляет строку text в конец уже имеющегося текста, а метод insert(String text, int position) вставляет ее в позицию position.
+
+Создадим простое окно, в котором разместим их с помощью менеджера BorderLayout.
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow15  extends JFrame {
+          
+          SimpleWindow15(){
+            super("Пример текстовых компонентов");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            JTextField textField = new JTextField("Текстовое поле", 20);
+            textField.setCaretColor(Color.RED);
+            textField.setHorizontalAlignment(JTextField.RIGHT);
+            JPasswordField passwordField = new JPasswordField(20);
+            passwordField.setEchoChar('$');
+            passwordField.setText("пароль");
+            JTextArea textArea = new JTextArea(5, 20);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            for (int i = 0; i <= 20; i++)
+            textArea.append("Область для ввода текстового содержимого ");
+            getContentPane().add(textField, BorderLayout.NORTH);
+            getContentPane().add(textArea);
+            getContentPane().add(passwordField, BorderLayout.SOUTH);
+            pack();
+        }
+
+        }
+
+
+замените по очереди true на false в вызовах методов setLineWrap() и setWrapStyleWord(). 
+
+Изменяйте размеры окна, чтобы видеть, каким образом текст перестраивается под доступное ему пространство.
+
+
+Панель прокрутки JScrollPane
+----------------------------
+Наблюдая за поведением компонента JTextArea, легко можно обнаружить проблемы, которые возникают, когда тексту становится «тесно» в рамках отведенного места. В зависимости от используемого менеджера расположения текст либо обрезается, уходя за границы компонента, либо раздвигает эти границы (но в любом случае остается ограничен размером окна). В таких случаях типично использование полос прокрутки, но в Swing полосы прокрутки сами собой не появляются.
+компонент JScrollPane — панель прокрутки 
+----------------------------------------
+Чаще всего она просто «надевается» на требуемый объект посредством собственного конструктора, принимающего этот объект в качестве параметра. Например, чтобы текстовая область textArea обрела полосы прокрутки, необходимо заменить команду
+
+getContentPane().add(textArea);
+
+на команду
+
+getContentPane().add(new JScrollPane(textArea));
+
+В этой команде создается панель с полосами прокрутки, в нее помещается объект textArea, а сама панель добавляется в панель содержимого окна. Теперь текст свободно прокручивается. А в случае применения менеджера FlowLayout или BoxLayout компонент JTextArea не будет подстраиваться под свое содержимое (будет иметь предпочтительный размер, соответствующий параметрам конструктора) и, при необходимости, отображать полоски прокрутки.
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow16  extends JFrame {
+          
+          SimpleWindow16(){
+            super("Пример текстовых компонентов");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            JTextField textField = new JTextField("Текстовое поле", 20);
+            textField.setCaretColor(Color.RED);
+            textField.setHorizontalAlignment(JTextField.RIGHT);
+            JPasswordField passwordField = new JPasswordField(20);
+            passwordField.setEchoChar('$');
+            passwordField.setText("пароль");
+            JTextArea textArea = new JTextArea(5, 20);
+            textArea.setLineWrap(true);
+            textArea.setWrapStyleWord(true);
+            for (int i = 0; i <= 20; i++)
+            textArea.append("Область для ввода текстового содержимого ");
+            getContentPane().add(textField, BorderLayout.NORTH);
+            //getContentPane().add(textArea);
+            getContentPane().add(new JScrollPane(textArea));
+            getContentPane().add(passwordField, BorderLayout.SOUTH);
+            pack();
+        }
+
+        }
+
+
+Полезными методами JScrollPane являются:
+----------------------------------------
+- setHorizontalScrollBarPolicy(int policy) — позволяет задать стратегию работы с горизонтальной полосой прокрутки. Возможные значения представлены константами HORIZONTAL_SCROLLBAR_ALWAYS (отображать всегда), HORIZONTAL_SCROLLBAR_AS_NEEDED (отображать при необходимости) и HORIZONTAL_SCROLLBAR_NEVER (не отображать никогда). Данные константы определены в интерфейсе ScrollPaneConstants.
+
+- setVerticalScrollBarPolicy(int policy) позволяет задать стратегию работы с вертикальной полосой прокрутки посредством констант VERTICAL_SCROLLBAR_ALWAYS, VERTICAL_SCROLLBAR_AS_NEEDED и VERTICAL_SCROLLBAR_NEVER.*
+
+Инструментальная панель JToolBar
+--------------------------------
+Большинство программных продуктов предоставляют удобные инструментальные панели, расположенные вдоль границ окна программы и содержащие кнопки, выпадающие списки и другие элементы управления, обычно соответствующие командам меню. В Swing для инструментальных панелей разработан визуальный компонент JToolBar, в котором заложена просто потрясающая функциональность.
+
+Создадим окно с менеджером расположения BorderLayout, разместим по центру область для ввода текста JTextArea, а к верхней границе прикрепим инструментальную панель с тремя кнопками и одним разделителем:
+
+      import javax.swing.*;
+      import java.awt.*;
+      import javax.swing.border.*;
+
+      public class SimpleWindow17  extends JFrame {
+        
+        SimpleWindow17(){
+          super("Пример использования JToolBar");
+          setDefaultCloseOperation(EXIT_ON_CLOSE);
+          JTextArea textArea = new JTextArea(5, 20);
+          getContentPane().add(textArea);
+          JToolBar toolBar = new JToolBar("Инструментальная панель");
+          toolBar.add(new JButton("Кнопка 1"));
+          toolBar.add(new JButton("Кнопка 2"));
+          toolBar.addSeparator();
+          toolBar.add(new JButton("Кнопка 3"));
+          getContentPane().add(toolBar, BorderLayout.NORTH);
+          pack();
+        }
+
+      }
+
+
+самые полезные методы JToolBar:
+-------------------------------
+Конструктор JToolBar(String title) создает горизонтальную панель с заданным заголовком. 
+
+Горизонтальная панель предназначена для прикрепления к верхней либо нижней границе родительской панели (имеющей расположение BorderLayout). Для создания вертикальной панели используется конструктор JToolBar(String title, int orientation), где параметр orientation задается константой VERTICAL из интерфейса SwingConstants. Также доступны конструкторы JToolBar() и JToolBar(int orientation), создающие панель без заголовка.
+
+setFloatable(boolean floatable) — разрешает либо запрещает (по умолчанию разрешает) пользователю откреплять панель от места ее начального расположения. Ему соответствует метод isFloatable() возвращающий true, если откреплять панель разрешено.
+
+add(Component component) — добавляет на инструментальную панель новый элемент управления. Взаимосвязанные группы элементов управления принято разделять с помощью линии или пустого пространства. Метод addSeparator() добавляет такой разделитель.
+
+Выпадающий список JComboBox
+----------------------------
+
+Создать выпадающий список можно конструктором по умолчанию JComboBox(), после чего добавлять в него элементы методом addItem(Object item), добавляющим новый элемент в конец списка, или методом insertItemAt(Object item, int index), позволяющим уточнить позицию, в которую требуется вставить элемент. Однако проще использовать конструктор, в котором сразу указываются все элементы выпадающего списка. Таких конструкторов два: JComboBox(Object[] elements) и JComboBox(Vector elements). Работают они одинаково, так что это вопрос удобства разработчика: использовать массив или вектор.
+Чаще всего в выпадающий список добавляют строки, однако, как это следует из сигнатур описанных выше методов, он может содержать вообще любые объекты. Любой объект преобразуется к строке методом toString(), именно эта строка и будет представлять его в выпадающем списке.
+Метод getItemAt(int index) позволяет обратиться к произвольному элементу.
+Метод removeAllItems() удаляет из JComboBox все элементы, а метод removeItem(Object item) — конкретный элемент (при условии, что он содержался в списке).
+Метод getSelectedIndex() позволяет получить индекс выбранного пользователем элемента (элементы нумеруются начиная с нуля), а метод getSelectedItem() возвращает сам выбранный объект. Сделать конкретный элемент выбранным можно и программно, воспользовавшись методом setSelectedIndex(int index) или setSelectedItem(Object item).
+Чтобы пользователь мог ввести свой вариант, который не присутствует в списке, должен быть вызван метод setEditable(boolean editable) с параметром true. Ему соответствует метод isEditable().
+
+Рассмотрим пример, в котором создается выпадающий список из 3 элементов и выбирается 2-й. Строка, представляющая третий элемент, использует HTML-теги. 
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow18  extends JFrame {
+          
+          SimpleWindow18(){
+            super("Пример использования JComboBox");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            String[] elements = new String[] {"Вася", "Петя",
+            "<html><font size = +1 color = yellow>Иван</font>"};
+            JComboBox combo = new JComboBox(elements);
+            combo.setSelectedIndex(1);
+            JPanel panel = new JPanel();
+            panel.add(combo);
+            setContentPane(panel);
+            setSize(200,200);
           }
-        }
 
-class SQLiteJDBC6
------------------
-
-        import java.sql.Connection;
-        import java.sql.Statement;
-        import java.sql.DriverManager;
-        import java.sql.ResultSet;
-        import java.sql.ResultSetMetaData;
-        import java.sql.DatabaseMetaData;
-
-        public class SQLiteJDBC6
-        {
-            public static void main (String[] args) throws Exception
-            {
-                // register the driver 
-                String sDriverName = "org.sqlite.JDBC";
-                Class.forName(sDriverName);
-         
-                // now we set up a set of fairly basic string variables to use in the body of the code proper
-                String sTempDb = "test.db";
-                String sJdbc = "jdbc:sqlite";
-                String sDbUrl = sJdbc + ":" + sTempDb;
-                // which will produce a legitimate Url for SqlLite JDBC :
-                // jdbc:sqlite:hello.db
-                int iTimeout = 30;
-                String sMakeTable = "CREATE TABLE dummy (id numeric, response text)";
-                String sMakeInsert = "INSERT INTO dummy VALUES(1,'Hello from the database')";
-                String sMakeSelect = "SELECT response from dummy";
-         
-                // create a database connection
-                Connection conn = DriverManager.getConnection(sDbUrl);
-                try {
-                    Statement stmt = conn.createStatement();
-                    try {
-                        stmt.setQueryTimeout(iTimeout);
-                        stmt.executeUpdate( sMakeTable );
-                        stmt.executeUpdate( sMakeInsert );
-                        ResultSet rs = stmt.executeQuery(sMakeSelect);
-                        try {
-                            while(rs.next())
-                                {
-                                    String sResult = rs.getString("response");
-                                    System.out.println(sResult);
-                                }
-                        } finally {
-                            try { rs.close(); } catch (Exception ignore) {}
-                        }
-                    } finally {
-                        try { stmt.close(); } catch (Exception ignore) {}
-                    }
-                } finally {
-                    try { conn.close(); } catch (Exception ignore) {}
-                }
-            }
         }
 
 
-class SQLiteJDBC7
------------------
-            import java.sql.Connection;
-            import java.sql.DriverManager;
-            import java.sql.ResultSet;
-            import java.sql.SQLException;
-            import java.sql.Statement;
+Ползунок JSlider
+----------------
+Ползунок позволяет пользователю выбрать некоторое число из диапазона доступных значений, наглядно представив этот диапазон. Против наглядности у ползунка есть один недостаток: он занимает достаточно много места.
+Основной конструктор ползунка: JSlider(int orientation, int min, int max, int value). Первый параметр — ориентация ползунка (HORIZONTAL или VERTICAL). Остальные параметры указывают соответственно минимальное, максимальное и текущее значение. Изменить эти значения позволяют методы setOrientation(int), setMinimum(int min), setMaximum(int max), setValue(int value), а получить текущие — соответствующие им методы get. Чаще всего, конечно, используется метод getValue() — чтобы определить, какое значение выбрал при помощи ползунка пользователь.
+Шкала ползунка может быть украшена делениями. Метод setMajorTickSpacing(int spacing) позволяет задать расстояние, через которое будут выводиться большие деления, а метод setMinorTickSpacing(int spacing) — расстояние, через которые будут выводиться маленькие деления. Метод setPaintTicks(boolean paint) включает или отключает прорисовку этих делений. Метод setSnapToTicks(boolean snap) включает или отключает «прилипание» ползунка к делениям: если вызвать этот метод с параметром true, пользователь сможет выбрать при помощи ползунка только значения, соответствующие делениям. Наконец, метод setPaintLabels(boolean paint) включает или отключает прорисовку меток под большими делениями.
+
+Пример использования перечисленных методов:
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow19  extends JFrame {
+          
+          SimpleWindow19(){
+            super("Пример использования JSlider");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            JSlider slider = new JSlider(JSlider.HORIZONTAL, 50, 150, 70);
+            slider.setMajorTickSpacing(20);
+            slider.setMinorTickSpacing(5);
+            slider.setPaintTicks(true);
+            slider.setPaintLabels(true);
+            slider.setSnapToTicks(true);
+            JPanel panel = new JPanel();
+            panel.add(slider);
+            setContentPane(panel);
+            pack();
+          }
+
+        }
 
 
-            class conn {
-                public static Connection conn;
-                public static Statement statmt;
-                public static ResultSet resSet;
-                
-                // --------ПОДКЛЮЧЕНИЕ К БАЗЕ ДАННЫХ--------
-                public static void Conn() throws ClassNotFoundException, SQLException 
-                   {
-                       conn = null;
-                       Class.forName("org.sqlite.JDBC");
-                       conn = DriverManager.getConnection("jdbc:sqlite:test.db");
-                       
-                       System.out.println("База Подключена!");
-                   }
-                
-                // --------Создание таблицы--------
-                public static void CreateDB() throws ClassNotFoundException, SQLException
-                   {
-                    statmt = conn.createStatement();
-                    statmt.execute("CREATE TABLE if not exists 'users' ('id' INTEGER PRIMARY KEY AUTOINCREMENT, 'name' text, 'phone' INT);");
-                    
-                    System.out.println("Таблица создана или уже существует.");
-                   }
-                
-                // --------Заполнение таблицы--------
-                public static void WriteDB() throws SQLException
-                {
-                       statmt.execute("INSERT INTO 'users' ('name', 'phone') VALUES ('Petya', 125453); ");
-                       statmt.execute("INSERT INTO 'users' ('name', 'phone') VALUES ('Vasya', 321789); ");
-                       statmt.execute("INSERT INTO 'users' ('name', 'phone') VALUES ('Masha', 456123); ");
-                      
-                       System.out.println("Таблица заполнена");
-                }
-                
-                // -------- Вывод таблицы--------
-                public static void ReadDB() throws ClassNotFoundException, SQLException
-                   {
-                    resSet = statmt.executeQuery("SELECT * FROM users");
-                    
-                    while(resSet.next())
-                    {
-                        int id = resSet.getInt("id");
-                        String  name = resSet.getString("name");
-                        String  phone = resSet.getString("phone");
-                         System.out.println( "ID = " + id );
-                         System.out.println( "name = " + name );
-                         System.out.println( "phone = " + phone );
-                         System.out.println();
-                    }   
-                    
-                    System.out.println("Таблица выведена");
-                    }
-                
-                    // --------Закрытие--------
-                    public static void CloseDB() throws ClassNotFoundException, SQLException
-                       {
-                      statmt.close();
-                        resSet.close();
-                      conn.close();
-                       
-                        System.out.println("Соединения закрыты");
-                       }
+Панель со вкладками JTabbedPane
+-------------------------------
+Многим программам бывает необходимо разместить в одном окне большое количество элементов управления, некоторые из которых (такие как списки, деревья, текстовые области и т.д.) могут к тому же занимать приличное пространство. Чаще всего такая необходимость возникает, когда для работы программе необходимо множество входных данных. Для того, чтобы не вводить дополнительных окон и не перегружать интерфейс, часто используется панель с закладками. Ее можно воспринимать как множество страниц (вкладок), каждая из которых занимает все доступное пространство, за исключением полосы с краю (это может быть любой край), где отображаются ярлычки с названиями страниц. Когда пользователь щелкает по ярлычку, открывается соответствующая ему страница. На каждой странице размещено несколько элементов управления (как правило, они группируются по смыслу).
+Создать панель со вкладками можно простым конструктором, в котором определяется только месторасположение ярлычков (LEFT, RIGHT, TOP или BOTTOM). Но иногда бывает полезен конструктор JTabbedPane(int orientation, int layout), где второй параметр принимает значения, соответствующие константам SCROLL_TAB_LAYOUT (если все ярлычки не помещаются, появляется полоса прокрутки) или WRAP_TAB_LAYOUT (ярлычки могут располагаться в несколько рядов).
+После этого можно добавлять вкладки методом addTab(), имеющим несколько вариантов. В частности, метод addTab(String title, Component tab) добавляет закладку с указанием текста ярлычка, а метод addTab(String title, Icon icon, Component tab) позволяет задать также и значок к ярлычку. В качестве вкладки обычно служит панель с размещенными на ней элементами управления.
 
+Создадим панель с десятью вкладками, на каждой из которых поместим по кнопке. Все эти вкладки создадим в цикле for, чтобы не писать много кода.
+
+        Simport javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow20  extends JFrame {
+          
+          SimpleWindow20(){
+            super("Пример использования JTabbedPane");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP, JTabbedPane.WRAP_TAB_LAYOUT);
+            for (int i = 1; i <= 10; i++) {
+            JPanel panel = new JPanel();
+            panel.add(new JButton("Кнопка № " + i));
+            tabbedPane.add("Панель " + i, panel);
             }
-            public class SQLiteJDBC7
-            {
-                public static void main(String[] args) throws ClassNotFoundException, SQLException {
-                    conn.Conn();
-                    conn.CreateDB();
-                    conn.WriteDB();
-                    conn.ReadDB();
-                    conn.CloseDB();
-                  }
-            }
+            getContentPane().add(tabbedPane);
+            setSize(300,200);
+          }
+
+        }
+
+
+Список JList
+------------
+Список JList — это один из сложных компонентов, для эффективной работы с которыми необходимо понимание основ библиотеки Swing, в частности, концепции «Модель-Вид». Компоненты JTree (дерево) и JTable (таблица) еще сложнее и в данном пособии не рассматриваются. Что касается списка, то некоторая часть его возможностей может быть использована без углубления в детали.
+Список содержит группу элементов, аналогично выпадающему списку JComboBox, но обладает двумя отличительными особенностями. Во-первых, на экране видны одновременно несколько элементов списка. Во-вторых, пользователь может выбрать в списке не один элемент, а несколько (если установлен соответствующий режим выделения).
+Создать список можно с помощью конструктора, работающего на основе массива Object[] или вектора Vector (аналогично JComboBox). Метод setVisibleRowCount(int count) устанавливает количество видимых элементов списка. Остальные элементы будут уходить за его пределы или прокручиваться, если поместить список в JScrollPane (что рекомендуется).
+По умолчанию пользователь может выбрать в списке любое число элементов, держа нажатой клавишу Ctrl. Это можно изменить, вызвав метод setSelectionMode(int mode), где параметр задается одной из констант класса ListSelectionModel:
+SINGLE_SELECTION — может быть выделен только один элемент,
+SINGLE_INTERVAL_SELECTION — может быть выделено несколько элементов, но составляющих непрерывный интервал,
+MULTIPLE_INTERVAL_SELECTION — может быть выделено произвольное количество смежных и несмежных элементов.
+Выделенный элемент списка (если он один) можно получить методом getSelectedValue(). Если таких несколько, метод вернет первый из них. Метод getSelectedValues() возвращает все выделенные элементы списка в виде массива Object[]. Аналогично работают методы getSelectedIndex() и getSelectedIndices(), только возвращают они не сами выделенные элементы, а их индексы. Всем этим методам соответствуют методы set, так что выделить элементы списка можно и программно.
+
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class SimpleWindow21  extends JFrame {
+          
+          SimpleWindow21(){
+            super("Пример с JList");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            Object[] elements = new Object[] {"Колбаса", "<html><font color = red>Масло", "Сгущенное молоко"};
+            JList list = new JList(elements);
+            list.setVisibleRowCount(5);
+            list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+            list.setSelectedIndices(new int[] {1,2});
+            getContentPane().setLayout(new FlowLayout());
+            getContentPane().add(new JScrollPane(list));
+            setSize(200,150);
+          }
+
+        }
+
+
+
+Окно входа в систему
+--------------------
+рассмотрим окно для входа в систему. Это окно содержит два текстовых поля для ввода логина и пароля, подписи к этим полям и кнопки «OK» и «Отмена».
+
+будем использовать один из менеджеров, сохраняющих предпочтительные размеры компонентов, а именно — BoxLayout. Проще всего представить наше окно как три горизонтальные панели, объединенные в одной вертикальной. В первой из них будет надпись «Логин:» и текстовое поле. Во второй — надпись «Пароль:» и поле для ввода пароля. В третьей будут размещены две кнопки. При этом необходимо учесть следующее:
+Кнопки «ОК» и «Отмена» принято прижимать к правому краю окна, поэтому в начале третьей горизонтальной панели необходимо добавить «пружину».
+Должно выдерживаться аккуратное расстояние между элементами. В частности, для стиля Java разработаны следующие рекомендации. Тесно связанные элементы (такие как текстовое поле и подпись к нему) должны отстоять друг от друга на 6 пикселов. Логически сгруппированные элементы — на 12 пикселов (в нашем случае это две верхние панели и пара кнопок). Все остальные элементы должны находиться на расстоянии 17 пикселов друг от друга. Не следует забывать и про рамку окна.
+В нашем случае надписи, которые мы собираемся поместить перед текстовыми полями, наверняка будут разной длины и из-за этого поля будут сдвинуты относительно друг друга, что не желательно. Поэтому следует принудительно задать у надписей одинаковую ширину.
+При увеличении размеров окна текстовые поля будут неэстетично изменять свою высоту. Можно ее зафиксировать, а можно просто запретить окну изменять свои размеры после упаковки командой setResizable(false).
+
+Итоговый код окна
+----------------- 
+
+
+        import javax.swing.*;
+        import java.awt.*;
+        import javax.swing.border.*;
+
+        public class LoginWindow  extends JFrame {
+          /* Для того, чтобы впоследствии обращаться к содержимому текстовых полей, рекомендуется сделать их членами класса окна */
+          JTextField loginField;
+          JPasswordField passwordField;
+          
+          LoginWindow(){
+            super("Вход в систему");
+            setDefaultCloseOperation(EXIT_ON_CLOSE);
+            // Настраиваем первую горизонтальную панель (для ввода логина)
+            Box box1 = Box.createHorizontalBox();
+            JLabel loginLabel = new JLabel("Логин:");
+            loginField = new JTextField(15);
+            box1.add(loginLabel);
+            box1.add(Box.createHorizontalStrut(6));
+            box1.add(loginField);
+            // Настраиваем вторую горизонтальную панель (для ввода пароля)
+            Box box2 = Box.createHorizontalBox();
+            JLabel passwordLabel = new JLabel("Пароль:");
+            passwordField = new JPasswordField(15);
+            box2.add(passwordLabel);
+            box2.add(Box.createHorizontalStrut(6));
+            box2.add(passwordField);
+            // Настраиваем третью горизонтальную панель (с кнопками)
+            Box box3 = Box.createHorizontalBox();
+            JButton ok = new JButton("OK");
+            JButton cancel = new JButton("Отмена");
+            box3.add(Box.createHorizontalGlue());
+            box3.add(ok);
+            box3.add(Box.createHorizontalStrut(12));
+            box3.add(cancel);
+            // Уточняем размеры компонентов
+            loginLabel.setPreferredSize(passwordLabel.getPreferredSize());
+            // Размещаем три горизонтальные панели на одной вертикальной
+            Box mainBox = Box.createVerticalBox();
+            mainBox.setBorder(new EmptyBorder(12,12,12,12));
+            mainBox.add(box1);
+            mainBox.add(Box.createVerticalStrut(12));
+            mainBox.add(box2);
+            mainBox.add(Box.createVerticalStrut(17));
+            mainBox.add(box3);
+            setContentPane(mainBox);
+            pack();
+            setResizable(false);
+          }
+
+        }
 
 
