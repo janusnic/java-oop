@@ -9,18 +9,41 @@ import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.border.TitledBorder;
-
+import java.util.Vector;
 
 public class View {
+    
+    private Db dbase;
+    private JTable table;
+    private Model model;
 
     public View() {
+        
+        //Не забудьте указать свой путь к базе, вместо моего: jdbc:sqlite:vehicle.db;
+                      
+        dbase = new Db("org.sqlite.JDBC", "jdbc:sqlite:vehicle.db");
+        
+        // Create views swing UI components 
+        JTextField searchTermTextField = new JTextField(26);
+        JButton filterButton = new JButton("Filter");
+        
         // Create table model
-        Model model = new Model();
-        //table.setModel(model.DATA,model.table_header);
-        JTable table = new JTable(model.rows,model.table_header);
+        model = new Model();
+        model.setTableData(dbase.getNomen("SELECT * FROM cars"));
+        
+        table = new JTable();
+        table.setModel(model);
+        
+        table.getColumnModel().getColumn(0).setMaxWidth(50);
+
+        // Create controller
+        Controller controller = new Controller(searchTermTextField, model);
+        filterButton.addActionListener(controller);
 
         // Set the view layout
         JPanel ctrlPane = new JPanel();
+        ctrlPane.add(searchTermTextField);
+        ctrlPane.add(filterButton);
 
         JScrollPane tableScrollPane = new JScrollPane(table);
         tableScrollPane.setPreferredSize(new Dimension(1000, 400));

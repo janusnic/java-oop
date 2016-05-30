@@ -1,16 +1,58 @@
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.ResultSet;
+import java.util.Vector;
 
 public class Db {
+    
+        private Connection con = null;
 
-    public static final Object[] TABLE_HEADER ={ "id","model","brand","price","built_date","gear","seat","wheels","miles","capacity","sold","sold_on" };
+        public Db(String driver, String url)
+        {
+            try
+            {
+                Class.forName(driver);
+                con = DriverManager.getConnection(url);
 
-    public static final Object[][] DATA =  {
-        { "1","Accord LX","Hyundai","25000.0","2007-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
-        { "3","Honda","Hyundai","11000.0","2012-01-01 10:00:00","1","4","4","1000","2","0","0000-00-00 00:00:00" },
-        { "4","Honda Sed","Hyundai","13000.0","2013-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
-        { "5","Accord LX","Hyundai","12000.0","2007-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
-        { "6","Honda","Hyundai","10000.0","2010-01-01 10:00:00","1","4","4","12000","2","0","0000-00-00 00:00:00" },
-        { "7","Honda","Hyundai","11000.0","2012-01-01 10:00:00","1","4","4","1000","2","0","0000-00-00 00:00:00" },
-        { "8","Honda Sed","Hyundai","13000.0","2013-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
+            } catch (ClassNotFoundException ex)
+            {
+                System.err.println("Db.Cannot find this db driver classes.");
+                    ex.printStackTrace();
+            } catch (SQLException e)
+            {
+                System.err.println("Db.Cannot connect to this db.");
+                    e.printStackTrace();        
+              }         
+        }
         
-    };
+        public Vector<Vector<Object>> getNomen(String query)
+        {
+            Vector<Vector<Object>> retVector = new Vector<Vector<Object>>();
+            try
+            {
+                Statement st = con.createStatement();
+                ResultSet rs = st.executeQuery(query);
+                ResultSetMetaData rsmd = rs.getMetaData();
+                int cols = rsmd.getColumnCount();
+                            while (rs.next())
+                            {
+                                    Vector<Object> newRow = new Vector<Object>();
+                                    for (int i = 1; i <= cols; i++)
+                                    {
+                                            newRow.add(rs.getObject(i));
+                                    }
+                                    retVector.add(newRow);
+                            }
+                            rs.close();
+                st.close();
+             } catch (SQLException e)
+             {
+                System.err.println("Db.There are problems with the query " + query);
+                e.printStackTrace();
+             }      
+            return retVector;
+        }
 }

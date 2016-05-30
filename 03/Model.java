@@ -1,52 +1,131 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.Vector;
+import javax.swing.table.AbstractTableModel;
 
-import javax.swing.table.DefaultTableModel;
-
-@SuppressWarnings("serial")
-public class Model extends DefaultTableModel {
+public class Model extends AbstractTableModel {
     
-    public Object [] table_header;
-
-    public static final Object[][] DATA =  {
-        { "1","Accord LX","Hyundai","25000.0","2007-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
-        { "3","Honda","Hyundai","11000.0","2012-01-01 10:00:00","1","4","4","1000","2","0","0000-00-00 00:00:00" },
-        { "4","Honda Sed","Hyundai","13000.0","2013-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
-        { "5","Accord LX","Hyundai","12000.0","2007-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
-        { "6","Honda","Hyundai","10000.0","2010-01-01 10:00:00","1","4","4","12000","2","0","0000-00-00 00:00:00" },
-        { "7","Honda","Hyundai","11000.0","2012-01-01 10:00:00","1","4","4","1000","2","0","0000-00-00 00:00:00" },
-        { "8","Honda Sed","Hyundai","13000.0","2013-01-01 10:00:00","1","4","4","10000","2","0","0000-00-00 00:00:00" },
+    //Имена колонок;
+    protected Vector<String> columnNames;
+    
+    //Данные;
+    private Vector<Vector<Object>> tableData;
+    
+    //Классы колонок;
+    protected Vector<Object> vColClass;
         
-    };
     public Model() {
-            
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String url = "jdbc:sqlite:vehicle.db";                
-            String query = "select *  from cars"; 
-            Connection con = DriverManager.getConnection(url);
-           
-            Statement st = con.createStatement();
+         super();
+         vColClass = new Vector<Object>(); 
+         vColClass.add(0, Integer.class);
+         vColClass.add(1, String.class);
+         vColClass.add(2, String.class);
+         vColClass.add(3, Double.class);
+         vColClass.add(4, String.class);
+         vColClass.add(5, Integer.class);
+         vColClass.add(6, Integer.class);
+         vColClass.add(7, Integer.class);
+         vColClass.add(8, Integer.class);
+         vColClass.add(9, Integer.class);
+         vColClass.add(10, Integer.class);
+         vColClass.add(11, String.class);
+         columnNames = new Vector<String>();
+         columnNames.add("#");
+         columnNames.add("Model");
+         columnNames.add("Brand");
+         columnNames.add("Price");
+         columnNames.add("Built Date");
+         columnNames.add("Geer");
+         columnNames.add("Seats");
+         columnNames.add("Wheels");
+         columnNames.add("Miles");
+         columnNames.add("Capacity");
+         columnNames.add("Sold");
+         columnNames.add("Sold On");
+                
+    }
+    
+    @Override
+    public int getColumnCount() 
+    {
+            return columnNames.size();
+    }
 
-            ResultSet rs = st.executeQuery(query);
-            
-            int columnCount = rs.getMetaData().getColumnCount();
-            ResultSetMetaData resultSetMetaData = rs.getMetaData();
-            
-            table_header = new String[columnCount];
-            
-            for (int i = 1; i <= resultSetMetaData.getColumnCount(); i++) {
-               String h = resultSetMetaData.getColumnName(i);
-              table_header[i-1]= h;
+    @Override
+    public int getRowCount()
+    {
+            return getTableData().size();
+    }
+
+    @Override
+    public Object getValueAt(int row, int column) 
+    {
+            return getTableData().get(row).get(column);
+    }
+
+    //Показывать заголовки колонок;
+    public String getColumnName(int column)
+    {
+            return columnNames.get(column);
+    }
+
+    //Запрещаем редактировать первую колонку (счёт колонок идёт с нуля);
+    public boolean isCellEditable(int row, int column)
+    {
+            if(column == 0)
+            {
+                    return false;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+            return true;
+
+    }
+
+    public void setValueAt(Object obj, int row, int column)
+    {
+     
+      switch (column) {
+    
+            case 0:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+            case 10:
+                (getTableData().get(row)).set(column, (Integer)obj);
+                break;
+
+            case 1:
+            case 2:
+                (getTableData().get(row)).set(column, (String)obj);
+                break;
+
+            case 3:
+            case 4:
+            case 11:
+                (getTableData().get(row)).set(column, (Double)obj);
+                break;
+            }
+            fireTableCellUpdated(row, column);
+    }
+    public Class<?> getColumnClass(int col)
+    {
+            Class<?> c = Object.class;
+            try 
+            {
+                    c = (Class<?>)vColClass.get(col);
+            } catch (RuntimeException e)
+            {
+                    System.out.println(e);
+            }
+            return c;
+    }
+
+    public void setTableData(Vector<Vector<Object>> tableData)
+    {
+            this.tableData = tableData;
+    }
+
+    public Vector<Vector<Object>> getTableData()
+    {
+            return tableData;
     }
 }
