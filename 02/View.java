@@ -12,6 +12,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -28,18 +29,9 @@ import javax.swing.border.BevelBorder;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 public class View  extends JFrame implements ActionListener, ChangeListener {
-    // Введем сразу имена для кнопок - потом будем их использовать в обработчиках
 
-    private static final String ALL_CARS = "allCars";
-    private static final String ALL_SOLD_CARS = "allSoldCars";
-    private static final String NOT_SOLD_CARS = "notSoldCars";
-    private static final String ABOUT_US = "aboutUs";
-    
-  
     private JSpinner spYear;
     
      public View() throws Exception {
@@ -54,28 +46,16 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
 
            // Создаем пункт в выпадающем меню
             JMenuItem menuItem = new JMenuItem("Все автомобили");
-            menuItem.setName(ALL_CARS);
-            
-            // Добавляем листенер
-            menuItem.addActionListener(this);
-            
+           
             // Вставляем пункт меню в выпадающее меню
             menu.add(menuItem);
             
             JMenuItem menuItem1 = new JMenuItem("Проданые автомобили");
-            menuItem1.setName(ALL_SOLD_CARS);
-            
-            // Добавляем листенер
-            menuItem1.addActionListener(this);
             
             // Вставляем пункт меню в выпадающее меню
             menu.add(menuItem1);
             
             JMenuItem menuItem2 = new JMenuItem("Непроданые автомобили");
-            menuItem2.setName(NOT_SOLD_CARS);
-            
-            // Добавляем листенер
-            menuItem2.addActionListener(this);
             
             // Вставляем пункт меню в выпадающее меню
             menu.add(menuItem2);
@@ -85,21 +65,17 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
 
             // Создаем пункт в выпадающем меню
             JMenuItem menuItema1 = new JMenuItem("About Us");
-            menuItema1.setName(ABOUT_US);
-          
-           // Добавляем листенер
-           menuItema1.addActionListener(this);
-           
-           
+            //menuItem.setName(ALL_CARS);
+            
            // Вставляем пункт меню в выпадающее меню
             menua.add(menuItema1);
         
             // Вставляем выпадающее меню в строку меню
             menuBar.add(menu);
             menuBar.add(menua);
+
             // Устанавливаем меню для формы
             setJMenuBar(menuBar);
-            
 
             // Создаем верхнюю панель, где будет поле для ввода года
             JPanel top = new JPanel();
@@ -116,58 +92,22 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
             // Добавляем листенер
             spYear.addChangeListener(this);
             top.add(spYear);
-    
+
             // Вставляем верхнюю и нижнюю панели в форму
             getContentPane().add(top, BorderLayout.NORTH);
 
             // Задаем границы формы
             setBounds(100, 100, 700, 500);
         }
-        
+        // Метод для обеспечения интерфейса ActionListener
+        public void actionPerformed(ActionEvent e) {
+        }
+
         // Метод для обеспечения интерфейса ChangeListener
         public void stateChanged(ChangeEvent e) {
 
         }
-        
-        // Метод для обеспечения интерфейса ActionListener
-        
-        public void actionPerformed(ActionEvent e) {
-            if (e.getSource() instanceof Component) {
-                Component c = (Component) e.getSource();
 
-                if (c.getName().equals(ALL_SOLD_CARS)) {
-                    showSoldCars();
-                }
-                if (c.getName().equals(NOT_SOLD_CARS)) {
-                    showNotSoldCars();
-                }
-                if (c.getName().equals(ALL_CARS)) {
-                    showAllCars();
-                }
-                if (c.getName().equals(ABOUT_US)) {
-                    showAbouUs();
-                }
-            }
-        }
-
-        // метод для показа всех автомобилей
-        private void showAllCars() {
-            JOptionPane.showMessageDialog(this, "showAllCars");
-        }
-        
-        private void showSoldCars() {
-            JOptionPane.showMessageDialog(this, "show All Sold Cars");
-        }
-
-        private void showNotSoldCars() {
-            JOptionPane.showMessageDialog(this, "show Not Sold Cars");
-        }
-        
-        private void showAbouUs() {
-            JOptionPane.showMessageDialog(this, "About Us");
-        }
-
-    
         public static void main(String args[]) {
         
             SwingUtilities.invokeLater(new Runnable() {
@@ -186,4 +126,3 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
             });
         }
 }
-

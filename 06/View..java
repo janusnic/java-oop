@@ -29,11 +29,12 @@ import javax.swing.border.BevelBorder;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 public class View  extends JFrame implements ActionListener, ChangeListener {
     // Введем сразу имена для кнопок - потом будем их использовать в обработчиках
+    
+    private static final String MOVE_BRAND = "moveBrand";
+    private static final String CLEAR_BRAND = "clearBrand";
 
     private static final String INSERT_CAR = "insertCar";
     private static final String UPDATE_CAR = "updateCar";
@@ -43,7 +44,8 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
     private static final String ALL_SOLD_CARS = "allSoldCars";
     private static final String NOT_SOLD_CARS = "notSoldCars";
     private static final String ABOUT_US = "aboutUs";
-    
+
+    //private JList grpList;
     private JTable carList;
   
     private JSpinner spYear;
@@ -122,10 +124,41 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
             // Добавляем листенер
             spYear.addChangeListener(this);
             top.add(spYear);
+
             
             // Создаем нижнюю панель и задаем ей layout
             JPanel bot = new JPanel();
             bot.setLayout(new BorderLayout());
+
+            // Создаем левую панель для вывода списка производителей
+            // Она у нас
+            BrandPanel left = new BrandPanel();
+            // Задаем layout и задаем "бордюр" вокруг панели
+            left.setLayout(new BorderLayout());
+            left.setBorder(new BevelBorder(BevelBorder.LOWERED));
+
+    
+            // Создаем надпись
+            left.add(new JLabel("Производитель:"), BorderLayout.NORTH);
+            
+            
+            // Создаем кнопки для производителей
+            JButton btnMvGr = new JButton("Переместить");
+            btnMvGr.setName(MOVE_BRAND);
+            JButton btnClGr = new JButton("Очистить");
+            btnClGr.setName(CLEAR_BRAND);
+            
+            // Добавляем листенер
+            btnMvGr.addActionListener(this);
+            btnClGr.addActionListener(this);
+            
+            // Создаем панель, на которую положим наши кнопки и кладем ее вниз
+            JPanel pnlBtnGr = new JPanel();
+            pnlBtnGr.setLayout(new GridLayout(1, 2));
+            pnlBtnGr.add(btnMvGr);
+            pnlBtnGr.add(btnClGr);
+            left.add(pnlBtnGr, BorderLayout.SOUTH);
+
     
             // Создаем правую панель для вывода списка cars
             JPanel right = new JPanel();
@@ -164,7 +197,7 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
             right.add(pnlBtnSt, BorderLayout.SOUTH);
 
             // Вставляем панели со списками производителей и автомобилей в нижнюю панель
-
+            bot.add(left, BorderLayout.WEST);
             bot.add(right, BorderLayout.CENTER);
 
             // Вставляем верхнюю и нижнюю панели в форму
@@ -198,9 +231,25 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
                 if (c.getName().equals(ABOUT_US)) {
                     showAbouUs();
                 }
+                if (c.getName().equals(MOVE_BRAND)) {
+                    moveBrand();
+                }
+                if (c.getName().equals(CLEAR_BRAND)) {
+                    clearBrand();
+                }
+                if (c.getName().equals(INSERT_CAR)) {
+                    insertCar();
+                }
+                if (c.getName().equals(UPDATE_CAR)) {
+                    updateCar();
+                }
+                if (c.getName().equals(DELETE_CAR)) {
+                    deleteCar();
+                }
             }
         }
-
+     
+ 
         // метод для показа всех автомобилей
         private void showAllCars() {
             JOptionPane.showMessageDialog(this, "showAllCars");
@@ -217,6 +266,32 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
         private void showAbouUs() {
             JOptionPane.showMessageDialog(this, "About Us");
         }
+        
+       // метод для переноса производителей
+        private void moveBrand() {
+            JOptionPane.showMessageDialog(this, "Move Brand");
+        }
+
+        // метод для очистки производителей
+        private void clearBrand() {
+            JOptionPane.showMessageDialog(this, "Clear Brand");
+        }
+        
+     // метод для добавления автомобиля
+        private void insertCar() {
+            JOptionPane.showMessageDialog(this, "Add Car");
+        }
+
+        // метод для редактирования автомобиля
+        private void updateCar() {
+            JOptionPane.showMessageDialog(this, "Update Car");
+        }
+
+        // метод для удаления автомобиля
+        private void deleteCar() {
+            JOptionPane.showMessageDialog(this, "Delete Car");
+        }
+
 
     
         public static void main(String args[]) {
@@ -238,3 +313,10 @@ public class View  extends JFrame implements ActionListener, ChangeListener {
         }
 }
 
+//Наш внутренний класс - переопределенная панель.
+class BrandPanel extends JPanel {
+
+ public Dimension getPreferredSize() {
+     return new Dimension(250, 0);
+ }
+}
