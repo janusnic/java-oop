@@ -1,5 +1,6 @@
 package vehicle;
 
+import java.sql.SQLException;
 import java.util.Vector;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -36,9 +37,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 public class View  extends JFrame implements ActionListener, ListSelectionListener, ChangeListener {
-    // Введем сразу имена для кнопок
+    // Введем сразу имена для кнопок - потом будем их использовать в обработчиках
     
-    private static final String MOVE_BRAND = "moveBrand";
+    private static final String MANAGE_BRAND = "manageBrand";
     private static final String CLEAR_BRAND = "clearBrand";
 
     private static final String INSERT_CAR = "insertCar";
@@ -58,7 +59,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
   
     private JSpinner spYear;
     private AboutDialog dialog;
-    
+    private BrandPanel left;
      public View() throws Exception {
             // Устанавливаем layout для всей клиентской части формы
             getContentPane().setLayout(new BorderLayout());
@@ -105,7 +106,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
             menuItema1.setName(ABOUT_US);
           
            // Добавляем листенер
-            menuItema1.addActionListener(this);
+           menuItema1.addActionListener(this);
            
            
            // Вставляем пункт меню в выпадающее меню
@@ -141,7 +142,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
 
             // Создаем левую панель для вывода списка производителей
             // Она у нас
-            BrandPanel left = new BrandPanel();
+            left= new BrandPanel();
             // Задаем layout и задаем "бордюр" вокруг панели
             left.setLayout(new BorderLayout());
             left.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -164,8 +165,8 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
             left.add(new JScrollPane(brandList), BorderLayout.CENTER);
             
             // Создаем кнопки для производителей
-            JButton btnMvGr = new JButton("Переместить");
-            btnMvGr.setName(MOVE_BRAND);
+            JButton btnMvGr = new JButton("Редактировать");
+            btnMvGr.setName(MANAGE_BRAND);
             JButton btnClGr = new JButton("Очистить");
             btnClGr.setName(CLEAR_BRAND);
             
@@ -253,8 +254,8 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
                     showAbouUs();
                     
                 }
-                if (c.getName().equals(MOVE_BRAND)) {
-                    moveBrand();
+                if (c.getName().equals(MANAGE_BRAND)) {
+                    manageBrand();
                 }
                 if (c.getName().equals(CLEAR_BRAND)) {
                     clearBrand();
@@ -274,7 +275,32 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
      
         // Метод для обеспечения интерфейса ListSelectionListener
         public void valueChanged(ListSelectionEvent e) {
-           
+        }
+        
+     // метод для обновления списка 
+        public void reloadBrands() {
+            // Создаем анонимный класс для потока
+            Thread t = new Thread() {
+                // Переопределяем в нем метод run
+                public void run() {
+                    if (brandList != null) {
+                        // Получаем визуальный список
+                        try {
+                            Vector<Brand> brand = new Vector<Brand>(db.getBrands());
+                            // Обновить список
+                            // 
+                            brandList.setListData(brand);
+                        } catch (SQLException e) {
+                            JOptionPane.showMessageDialog(View.this, e.getMessage());
+                        }
+                    }
+                }
+                // Окончание нашего метода run
+            };
+            // Окончание определения анонимного класса
+
+            // И теперь мы запускаем наш поток
+            t.start();
         }
 
         // метод для показа всех автомобилей
@@ -291,14 +317,38 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
         }
         
         private void showAbouUs() {
+            //
             if(dialog == null) // в первый раз
                 dialog = new AboutDialog(View.this);
             dialog.setVisible(true); // отобразить диалог
         }
         
        // метод для переноса производителей
-        private void moveBrand() {
-            JOptionPane.showMessageDialog(this, "Move Brand");
+        private void manageBrand() {
+
+            Thread t = new Thread() {
+
+            public void run() {
+             try {
+            
+            BrandDialog brand = new BrandDialog(db.getBrands(),View.this);
+            // Задаем ему режим модальности - нельзя ничего кроме него выделить
+            brand.setModal(true);
+            // Показываем диалог
+            brand.setVisible(true);
+            if (brand.getResult()) {
+                Brand s = brand.getBrand();
+                db.insertBrand(s);
+                reloadBrands();
+            }
+             
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(View.this, e.getMessage());
+        }
+            
+                }
+            };
+            t.start();
         }
 
         // метод для очистки производителей
@@ -308,7 +358,26 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
         
      // метод для добавления автомобиля
         private void insertCar() {
-            JOptionPane.showMessageDialog(this, "Add Car");
+            Thread t = new Thread() {
+
+                public void run() {
+                    try {
+                        // Добавляем 
+                        
+                        CarDialog car = new CarDialog(db.getBrands(), true, View.this);
+                        car.setModal(true);
+                        car.setVisible(true);
+                        if (car.getResult()) {
+                            Car c = car.getCar();
+                            db.insertCar(c);
+
+                        }
+                    } catch (SQLException e) {
+                        JOptionPane.showMessageDialog(View.this, e.getMessage());
+                    }
+                }
+            };
+            t.start();
         }
 
         // метод для редактирования автомобиля
@@ -320,6 +389,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
         private void deleteCar() {
             JOptionPane.showMessageDialog(this, "Delete Car");
         }
+
 
     
         public static void main(String args[]) {

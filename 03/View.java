@@ -10,7 +10,7 @@ import java.awt.GridLayout;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
+import java.util.Collection;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -59,7 +59,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
   
     private JSpinner spYear;
     private AboutDialog dialog;
-    
+    private BrandPanel left;
      public View() throws Exception {
             // Устанавливаем layout для всей клиентской части формы
             getContentPane().setLayout(new BorderLayout());
@@ -142,7 +142,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
 
             // Создаем левую панель для вывода списка производителей
             // Она у нас
-            BrandPanel left = new BrandPanel();
+            left= new BrandPanel();
             // Задаем layout и задаем "бордюр" вокруг панели
             left.setLayout(new BorderLayout());
             left.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -232,7 +232,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
         
         // Метод для обеспечения интерфейса ChangeListener
         public void stateChanged(ChangeEvent e) {
-
+            reloadCars();
         }
         
         // Метод для обеспечения интерфейса ActionListener
@@ -275,7 +275,71 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
      
         // Метод для обеспечения интерфейса ListSelectionListener
         public void valueChanged(ListSelectionEvent e) {
+            if (!e.getValueIsAdjusting()) {
+                reloadCars();
+            }
         }
+           
+    
+        // метод для обновления списка автомобилей для определенного производителя
+        public void reloadCars() {
+    
+        // Создаем анонимный класс для потока
+        Thread t = new Thread() {
+            // Переопределяем в нем метод run
+
+            public void run() {
+                if (carList != null) {
+                    // Получаем визуальный список
+                    Brand g = (Brand) brandList.getSelectedValue();
+                    // Получаем число из спинера
+                    int y = ((SpinnerNumberModel) spYear.getModel()).getNumber().intValue();
+                    try {
+                        // Получаем список автомобилей
+                        Collection<Car> s = db.getCarsFromBrand(g, y);
+                        // И устанавливаем модель для таблицы с новыми данными
+                        carList.setModel(new CarTableModel(new Vector<Car>(s)));
+                    } catch (SQLException e) {
+                        JOptionPane.showMessageDialog(View.this, e.getMessage());
+                    }
+                }
+            }
+            // Окончание нашего метода run
+        };
+        // Окончание определения анонимного класса
+
+        // И теперь мы запускаем наш поток
+        t.start();
+    }
+
+
+        
+     // метод для обновления списка 
+        public void reloadBrands() {
+            // Создаем анонимный класс для потока
+            Thread t = new Thread() {
+                // Переопределяем в нем метод run
+                public void run() {
+                    if (brandList != null) {
+                        // Получаем визуальный список
+                        try {
+                            Vector<Brand> brand = new Vector<Brand>(db.getBrands());
+                            // Обновить список
+                            // 
+                            brandList.setListData(brand);
+                        } catch (SQLException e) {
+                            JOptionPane.showMessageDialog(View.this, e.getMessage());
+                        }
+                    }
+                }
+                // Окончание нашего метода run
+            };
+            // Окончание определения анонимного класса
+
+            // И теперь мы запускаем наш поток
+            t.start();
+        }
+
         // метод для показа всех автомобилей
         private void showAllCars() {
             JOptionPane.showMessageDialog(this, "showAllCars");
@@ -312,7 +376,7 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
             if (brand.getResult()) {
                 Brand s = brand.getBrand();
                 db.insertBrand(s);
-
+                reloadBrands();
             }
              
         } catch (SQLException e) {
@@ -331,13 +395,67 @@ public class View  extends JFrame implements ActionListener, ListSelectionListen
         
      // метод для добавления автомобиля
         private void insertCar() {
-            JOptionPane.showMessageDialog(this, "Add Car");
+            Thread t = new Thread() {
+
+                public void run() {
+                    try {
+                        // Добавляем 
+                        
+                        CarDialog car = new CarDialog(db.getBrands(), true, View.this);
+                        car.setModal(true);
+                        car.setVisible(true);
+                        if (car.getResult()) {
+                            Car c = car.getCar();
+                            db.insertCar(c);
+                            reloadCars();
+                        }
+                    } catch (SQLException e) {
+                        JOptionPane.showMessageDialog(View.this, e.getMessage());
+                    }
+                }
+            };
+            t.start();
         }
 
         // метод для редактирования автомобиля
         private void updateCar() {
-            JOptionPane.showMessageDialog(this, "Update Car");
-        }
+            
+                Thread t = new Thread() {
+
+                    public void run() {
+                        if (carList != null) {
+                            CarTableModel stm = (CarTableModel) carList.getModel();
+                            // Проверяем - выделен ли хоть какой-нибудь автомобил
+                            if (carList.getSelectedRow() >= 0) {
+                                // Вот где нам пригодился метод getCar(int rowIndex)
+                                Car s = stm.getCar(carList.getSelectedRow());
+                                try {
+                                    // Исправляем данные на автомобиля - поэтому false
+                                    // Также заметим, что необходимо указать не просто this, а View.this
+                                    // Иначе класс не будет воспринят - он же другой - анонимный
+                                    CarDialog cd = new CarDialog(db.getBrands(), false, View.this);
+                                    cd.setCar(s);
+                                    cd.setModal(true);
+                                    cd.setVisible(true);
+                                    if (cd.getResult()) {
+                                        Car us = cd.getCar();
+                                        db.updateCar(us);
+                                        reloadCars();
+                                    }
+                                } catch (SQLException e) {
+                                    JOptionPane.showMessageDialog(View.this, e.getMessage());
+                                }
+                            } // Если автомобиль не выделен - сообщаем пользователю, что это необходимо
+                            else {
+                                JOptionPane.showMessageDialog(View.this,
+                                        "Необходимо выделить автомобиль в списке");
+                            }
+                        }
+                    }
+                };
+                t.start();
+            }
+
 
         // метод для удаления автомобиля
         private void deleteCar() {
